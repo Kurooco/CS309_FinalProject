@@ -7,28 +7,7 @@
 #include <stdio.h>
 
 using namespace std;
-//Must add sfml path to c_cpp_properties.json
 
-// g++ -c main.cpp -I"C:\Users\DJsul\OneDrive\Documents\libraries\SFML-2.5.1\include"
-// g++ main.o -o Main -L"C:\Users\DJsul\OneDrive\Documents\libraries\SFML-2.5.1\lib" -lsfml-graphics -lsfml-window -lsfml-system
-
-//g++ -c main.cpp -I"C:\Users\DJsul\OneDrive\Documents\libraries\SFML-2.5.1\include" -DSFML_STATIC
-//g++ main.o -o Main -L"C:\Users\DJsul\OneDrive\Documents\libraries\SFML-2.5.1\lib" -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lopengl32 -lfreetype -lwinmm -lgdi32 -mwindows
-
-//To "make clean", just delete the object and executable file
-
-// Circle
-//sf::CircleShape shape(100.f);
-// Rectangle
-//sf::RectangleShape shape(sf::Vector2f(120.f, 50.f));
-// Fill
-//shape.setFillColor(sf::Color::Yellow);
-//Position
-//.setPosition(10.f, 50.f);
-
-// -mwindows removes console
-
-//Sprite only stores a pointer to texture. As soon as texture is destroyed, sprite is without a texture to refer to
 
 class CustomTexture
 {
@@ -71,7 +50,7 @@ class CustomSprite
         sf::Vector2f position;
 
     public:
-        CustomSprite(int x, int y, CustomTexture* texture){
+        CustomSprite(CustomTexture* texture, int x, int y){
 
             this->texture = texture;
 
@@ -112,45 +91,22 @@ class CustomSprite
         }
 };
 
-//Forward declare textures and sounds
-sf::Texture t_apple;
-CustomTexture* t_lemon;
-
-
-
 
 int main()
 {
-    //Play music
-    /*if (!music.openFromFile("sfx/mainSong.wav"))
-       return -1; // error
-    music.setVolume(100.f);
-    music.play();
-    music.setLoop(true);*/
-
     // Create window
     sf::RenderWindow window(sf::VideoMode(400, 400), "Game Test");
     sf::RectangleShape shape(sf::Vector2f(10.f, 10.f));
     shape.setFillColor(sf::Color::Yellow);
 
     //LOAD TEXTURES
-    //t_apple.loadFromFile("sprites\\apple.png"); //Make program that automates naming/adding pics
-    //t_lemon.loadFromFile("sprites\\lemon.png");
-    t_lemon = new CustomTexture("sprites\\lemon.png", 50, 50);
-   // SpritePresets* p_apple = new SpritePresets();
+    CustomTexture* t_lemon = new CustomTexture("sprites\\lemon.png", 50, 50);
+    CustomTexture* t_apple = new CustomTexture("sprites\\apple.png", 50, 50);
 
     //Create Sprites
-    CustomSprite* apple = new CustomSprite(50, 50, t_lemon);
+    CustomSprite* apple = new CustomSprite(t_apple, 50, 50);
 
-    vector<CustomSprite*> blocks{/*new CustomSprite(t_apple, 50, 50), new CustomSprite(t_apple, 100, 100)*/};
-
-    /* Excellent! It seems to work fine.
-    #pragma omp parallel for num_threads(4)
-    for(int i = 0; i < 100; i++)
-    {
-        long id = omp_get_thread_num();
-        printf("\n%d from %ld", i, id);
-    }*/
+    vector<CustomSprite*> blocks{new CustomSprite(t_lemon, 50, 50), new CustomSprite(t_lemon, 100, 100)};
 
     //Game Loop
     while (window.isOpen())

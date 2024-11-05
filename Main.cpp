@@ -91,24 +91,44 @@ class CustomSprite
         }
 };
 
+class Grass : CustomSprite
+{
+    vector<Grass*>* grassVector;
+
+    public:
+        Grass(CustomTexture* texture, int x, int y, vector<Grass*>* grass) : CustomSprite(texture, x, y)
+        {
+            grassVector = grass;
+        }
+
+        void update()
+        {
+            grassVector->push_back(new Grass(texture, position.x, position.y, grassVector));
+        }
+};
+
 
 int main()
 {
     // Create window
-    sf::RenderWindow window(sf::VideoMode(400, 400), "Game Test");
+    sf::RenderWindow window(sf::VideoMode(800, 450), "Simulation");
     sf::RectangleShape shape(sf::Vector2f(10.f, 10.f));
     shape.setFillColor(sf::Color::Yellow);
 
-    //LOAD TEXTURES
+    // Load Textures
     CustomTexture* t_lemon = new CustomTexture("sprites\\lemon.png", 50, 50);
-    CustomTexture* t_apple = new CustomTexture("sprites\\apple.png", 50, 50);
+    CustomTexture* t_apple = new CustomTexture("sprites\\apple.png", 70, 50);
 
-    //Create Sprites
+    // Declare Data Structures
+    vector<Grass*> grasses{};
+
+    // Create Sprites
     CustomSprite* apple = new CustomSprite(t_apple, 50, 50);
+    Grass* grass = new Grass(t_apple, 50, 50, &grasses);
 
     vector<CustomSprite*> blocks{new CustomSprite(t_lemon, 50, 50), new CustomSprite(t_lemon, 100, 100)};
 
-    //Game Loop
+    // Main Loop
     while (window.isOpen())
     {
         sf::Event event;

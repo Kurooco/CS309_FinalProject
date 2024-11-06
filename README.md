@@ -18,9 +18,10 @@ for(int i = 0; i < 100; i++)
     printf("\n%d from %ld", i, id);
 }
 
-## Things I learned...
+## Things I Learned/Relearned...
 
 - The -mwindows flag removes the console
+- add "public" before inherited class to make inherited methods available
 
 ## Websites Visited for this Project
 

@@ -105,7 +105,7 @@ class Grass : public CustomSprite
         {
             grassVector = grass;
         }
-
+        
         void update()
         {
             currentReproduceIter++;
@@ -149,13 +149,14 @@ int main()
     // Load Textures
     CustomTexture* t_lemon = new CustomTexture("sprites\\lemon.png", 50, 50);
     CustomTexture* t_apple = new CustomTexture("sprites\\apple.png", 70, 50);
+    CustomTexture* t_grass = new CustomTexture("sprites\\grass.png", 10, 10);
 
     // Declare Data Structures
     vector<Grass*> grasses{};
 
     // Create Sprites
     CustomSprite* apple = new CustomSprite(t_apple, 50, 50);
-    Grass* grass = new Grass(t_lemon, 200, 200, &grasses);
+    Grass* grass = new Grass(t_grass, 200, 200, &grasses);
 
     vector<CustomSprite*> blocks{/*new CustomSprite(t_lemon, 50, 50), new CustomSprite(t_lemon, 100, 100)*/};
 

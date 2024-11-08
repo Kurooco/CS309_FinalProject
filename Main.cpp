@@ -210,21 +210,24 @@ class Cow : public CustomSprite
 {
     public:
         static const int REPRODUCE_ITER = 1000;
-        static const int MAX_FOOD = 1000;
-        static const int FOOD_NEEDED_TO_REPRODUCE = 500;
+        static const int MAX_FOOD = 1500;
+        static const int FOOD_NEEDED_TO_REPRODUCE = 750;
+        static const int EYESIGHT = 100;
 
     private:
         vector<Grass*>* grassVector;
         int currentReproduceIter;
         const float SPEED = .1;
         int food;
+        sf::Vector2i searchLocation;
 
     public:
         Cow(CustomTexture* texture, int x, int y, vector<Grass*>* grass) : CustomSprite{texture, x, y}
         {
             grassVector = grass;
             currentReproduceIter = 0;
-            food = MAX_FOOD;
+            food = MAX_FOOD/2;
+            searchLocation = sf::Vector2i(rand()%1600, rand()%900);
         }
 
         bool update()
@@ -247,7 +250,21 @@ class Cow : public CustomSprite
                     grassInd = i;
                 }
             }
-            if(minDist > 5)
+            if(minDist > EYESIGHT)
+            {
+                xDist = searchLocation.x - position.x;
+                yDist = searchLocation.y - position.y;
+                float distance = sqrt(xDist * xDist + yDist * yDist);
+                if(distance < 5)
+                    searchLocation = sf::Vector2i(rand()%1600, rand()%900);
+                else
+                {
+                    float xMove = (xDist/distance)*SPEED;
+                    float yMove = (yDist/distance)*SPEED;
+                    move(xMove, yMove);
+                }
+            }
+            else if(minDist > 5)
             {
                 float xMove = ((grassPosition.x - position.x)/minDist)*SPEED;
                 float yMove = ((grassPosition.y - position.y)/minDist)*SPEED;
@@ -270,7 +287,7 @@ class Cow : public CustomSprite
 
         Cow* reproduce()
         {
-            return new Cow(texture, position.x + 50, position.y + 50, grassVector);
+            return new Cow(texture, position.x - 50 + rand()%100, position.y - 50 + rand()%100, grassVector);
         }
 
         bool hasStarved()
@@ -295,15 +312,18 @@ int main()
     CustomTexture* t_grass = new CustomTexture("sprites\\grass.png", 10, 10);
     CustomTexture* t_cow = new CustomTexture("sprites\\cow.png", 10, 10);
 
-    // Declare Data Structures
+    // Declare Data Structures and other states
     vector<Grass*> grasses{};
     grasses.reserve(400);
     vector<Cow*> cows{};
     cows.reserve(200);
 
+    const int BIRD_ITER = 8000;
+    int bird = 0;
+
     // Create Sprites
     CustomSprite* apple = new CustomSprite(t_apple, 350, 200);
-    for(int i = 0; i < 20; i++)
+    for(int i = 0; i < 40; i++)
     {
         int place_x = rand()%Grass::boardDimX;
         int place_y = rand()%Grass::boardDimY;
@@ -311,7 +331,8 @@ int main()
             grasses.push_back(new Grass(t_grass, place_x*Grass::REPRODUCE_RAD, place_y*Grass::REPRODUCE_RAD, &grasses, place_x, place_y));
     }
 
-    cows.push_back(new Cow(t_cow, 100, 100, &grasses));
+    for(int i = 0; i < 20; i++)
+        cows.push_back(new Cow(t_cow, rand()%1000, rand()%800, &grasses));
 
 
 
@@ -351,7 +372,7 @@ int main()
         //window.draw(*apple->getSprite());
         //window.draw(*grass->getSprite());
 
-
+        // Update/draw grass
         vector<Grass*>::size_type grass_num = grasses.size();
         vector<Grass*>::size_type i = 0;
         while(i < grass_num)
@@ -366,6 +387,19 @@ int main()
             i++;
         }
 
+        // Birds (Dropping seeds in random places)
+        bird++;
+        if(bird >= BIRD_ITER)
+        {
+            int place_x = rand()%Grass::boardDimX;
+            int place_y = rand()%Grass::boardDimY;
+            if(Grass::locationArray[place_x][place_y] == nullptr)
+                grasses.push_back(new Grass(t_grass, place_x*Grass::REPRODUCE_RAD, place_y*Grass::REPRODUCE_RAD, &grasses, place_x, place_y)); 
+            bird = 0;
+        }
+
+
+        // Update/draw cows
         for(int i = 0; i < cows.size(); i++)
         {
             window.draw(*cows[i]->getSprite());

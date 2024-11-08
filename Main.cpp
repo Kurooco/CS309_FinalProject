@@ -197,8 +197,12 @@ class Grass : public CustomSprite
                     //printf("%d", dir);
                 }                
             }
-
             return newGrass;
+        }
+
+        void eat()
+        {
+            locationArray[selfPosition.x][selfPosition.y] = nullptr;
         }
 };
 
@@ -206,39 +210,73 @@ class Cow : public CustomSprite
 {
     public:
         static const int REPRODUCE_ITER = 1000;
+        static const int MAX_FOOD = 1000;
+        static const int FOOD_NEEDED_TO_REPRODUCE = 500;
 
     private:
         vector<Grass*>* grassVector;
         int currentReproduceIter;
-        const float SPEED = 50;
+        const float SPEED = .1;
+        int food;
 
     public:
         Cow(CustomTexture* texture, int x, int y, vector<Grass*>* grass) : CustomSprite{texture, x, y}
         {
             grassVector = grass;
             currentReproduceIter = 0;
+            food = MAX_FOOD;
         }
 
-        void update()
+        bool update()
         {
+            food--;
             float minDist = INT_MAX;
             sf::Vector2f grassPosition;
+            int xDist = 0;
+            int yDist = 0;
+            int grassInd = 0;
             for(int i = 0; i < grassVector->size(); i++)
             {
-                int xDist = (*grassVector)[i]->getPosition().x - position.x;
-                int yDist = (*grassVector)[i]->getPosition().y - position.y;
+                xDist = (*grassVector)[i]->getPosition().x - position.x;
+                yDist = (*grassVector)[i]->getPosition().y - position.y;
                 float distance = sqrt(xDist * xDist + yDist * yDist);
                 if(distance < minDist)
                 {
                     minDist = distance;
                     grassPosition = (*grassVector)[i]->getPosition();
+                    grassInd = i;
                 }
             }
-            float xMove = (grassPosition.x/minDist)*SPEED;
-            float yMove = (grassPosition.y/minDist)*SPEED;
-            //printf("\n%f", xMove);
-            position.x += xMove;
+            if(minDist > 5)
+            {
+                float xMove = ((grassPosition.x - position.x)/minDist)*SPEED;
+                float yMove = ((grassPosition.y - position.y)/minDist)*SPEED;
+                move(xMove, yMove);
+            }
+            else
+            {
+                (*grassVector)[grassInd]->eat();
+                grassVector->erase(grassVector->begin() + grassInd);
+                food = MAX_FOOD;
+            }
+            this->sprite->setPosition(position.x, position.y);
+
+            // reproduce?
+            if(rand()%REPRODUCE_ITER == 0 && food >= FOOD_NEEDED_TO_REPRODUCE)
+                return true;
+            else   
+                return false;
         }       
+
+        Cow* reproduce()
+        {
+            return new Cow(texture, position.x + 50, position.y + 50, grassVector);
+        }
+
+        bool hasStarved()
+        {
+            return food <= 0;
+        }
 };
 
 // Declare underlying grass location array
@@ -313,12 +351,6 @@ int main()
         //window.draw(*apple->getSprite());
         //window.draw(*grass->getSprite());
 
-        for(int i = 0; i < cows.size(); i++)
-        {
-            cows[i]->update();
-            window.draw(*cows[i]->getSprite());
-        }
-
 
         vector<Grass*>::size_type grass_num = grasses.size();
         vector<Grass*>::size_type i = 0;
@@ -333,7 +365,22 @@ int main()
             }
             i++;
         }
-        //printf("\n%d", grasses.size());
+
+        for(int i = 0; i < cows.size(); i++)
+        {
+            window.draw(*cows[i]->getSprite());
+            Cow* newCow;
+            if(cows[i]->update())
+            {
+                newCow = cows[i]->reproduce();
+                cows.push_back(newCow);
+            }
+            if(cows[i]->hasStarved())
+            {
+                cows.erase(cows.begin() + i);
+            }
+        }
+
         window.display();
     }
 

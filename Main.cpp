@@ -109,12 +109,16 @@ class CustomSprite
 
 class Grass : public CustomSprite
 {
-    static Grass* locationArray[][20];
+    public:
+        static const int boardDimX = 70;
+        static const int boardDimY = 40;
+        static const int REPRODUCE_ITER = 1000;
+        static const int REPRODUCE_RAD = 20;
+        static Grass* locationArray[][boardDimY+1];
 
     private:
-        const int REPRODUCE_ITER = 1000;
-        int REPRODUCE_RAD = 20;
-        const sf::Vector2i GRID_POSITION = sf::Vector2i(100, 100);
+        
+        //const sf::Vector2i GRID_POSITION = sf::Vector2i(100, 100);
 
         vector<Grass*>* grassVector;
         int currentReproduceIter = 0;
@@ -137,8 +141,8 @@ class Grass : public CustomSprite
 
         void update()
         {
-            currentReproduceIter++;
-            currentReproduceIter %= REPRODUCE_ITER;
+            currentReproduceIter += rand()%(REPRODUCE_ITER/20);
+            currentReproduceIter = currentReproduceIter > REPRODUCE_ITER ? 0 : currentReproduceIter;
         }
 
         Grass* reproduce()
@@ -151,7 +155,7 @@ class Grass : public CustomSprite
                 int y_pos = selfPosition.y;//(int)position.y;
                 for(int i = 0; i < 4; i++)
                 {
-                    if(selfPosition.x < 20 && dir == 0 && locationArray[x_pos + 1][y_pos] == nullptr)
+                    if(selfPosition.x < boardDimX && dir == 0 && locationArray[x_pos + 1][y_pos] == nullptr)
                     {
                         newGrass = new Grass(texture, position.x + REPRODUCE_RAD, position.y, grassVector, x_pos + 1, y_pos);
                         return newGrass;
@@ -161,7 +165,7 @@ class Grass : public CustomSprite
                         newGrass = new Grass(texture, position.x - REPRODUCE_RAD, position.y, grassVector, x_pos - 1, y_pos);
                         return newGrass;
                     }
-                    if(selfPosition.y < 20 && dir == 2 && locationArray[x_pos][y_pos + 1] == nullptr)
+                    if(selfPosition.y < boardDimY && dir == 2 && locationArray[x_pos][y_pos + 1] == nullptr)
                     {
                         newGrass = new Grass(texture, position.x, position.y + REPRODUCE_RAD, grassVector, x_pos, y_pos + 1);
                         return newGrass;
@@ -215,12 +219,12 @@ class Grass : public CustomSprite
 };
 
 // Declare underlying grass location array
-Grass* Grass::locationArray[20][20] = {{nullptr}};
+Grass* Grass::locationArray[Grass::boardDimX+1][Grass::boardDimY+1] = {{nullptr}};
 
 int main()
 {
     // Create window
-    sf::RenderWindow window(sf::VideoMode(800, 450), "Simulation");
+    sf::RenderWindow window(sf::VideoMode(1600, 900), "Simulation");
     sf::RectangleShape shape(sf::Vector2f(10.f, 10.f));
     shape.setFillColor(sf::Color::Yellow);
 
@@ -235,7 +239,12 @@ int main()
 
     // Create Sprites
     CustomSprite* apple = new CustomSprite(t_apple, 350, 200);
-    grasses.push_back(new Grass(t_grass, 100, 100, &grasses, 0, 0));
+    for(int i = 0; i < 20; i++)
+    {
+        int place_x = rand()%Grass::boardDimX;
+        int place_y = rand()%Grass::boardDimY;
+        grasses.push_back(new Grass(t_grass, place_x*Grass::REPRODUCE_RAD, place_y*Grass::REPRODUCE_RAD, &grasses, place_x, place_y));
+    }
 
     vector<CustomSprite*> blocks{/*new CustomSprite(t_lemon, 50, 50), new CustomSprite(t_lemon, 100, 100)*/};
 
@@ -276,7 +285,7 @@ int main()
         apple->update();
         //grass->update();
         
-        window.draw(*apple->getSprite());
+        //window.draw(*apple->getSprite());
         //window.draw(*grass->getSprite());
 
         for(int i = 0; i < blocks.size(); i++)

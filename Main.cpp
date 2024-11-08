@@ -61,7 +61,6 @@ class CustomSprite
             this->position.y = y;
 
             this->sprite->setOrigin(texture->getOriginX(), texture->getOriginY());
-            //sf::Vector2f increment(0.4f, 0.4f);
             this->sprite->setPosition(x, y);
 
         }
@@ -122,9 +121,6 @@ class Grass : public CustomSprite
         static Grass* locationArray[][boardDimY+1];
 
     private:
-        
-        //const sf::Vector2i GRID_POSITION = sf::Vector2i(100, 100);
-
         vector<Grass*>* grassVector;
         int currentReproduceIter = 0;
         sf::Vector2i selfPosition;
@@ -132,13 +128,6 @@ class Grass : public CustomSprite
     public:
         Grass(CustomTexture* texture, int x, int y, vector<Grass*>* grass, int indX, int indY) : CustomSprite{texture, x, y}
         {
-            //this->texture = texture;
-            //position = sf::Vector2f((x*REPRODUCE_RAD + GRID_POSITION.x), (y*REPRODUCE_RAD + GRID_POSITION.y));
-            //printf("\nx: %d y: %d realx: %d realy: %d", position.x, position.y, x*REPRODUCE_RAD + GRID_POSITION.x, y*REPRODUCE_RAD + GRID_POSITION.y);
-            
-            //Grass::locationArray[(x-GRID_POSITION.x)/REPRODUCE_RAD][(y-GRID_POSITION.y)/REPRODUCE_RAD] = this; 
-            //selfPosition = sf::Vector2i((x-GRID_POSITION.x)/REPRODUCE_RAD, (y-GRID_POSITION.y)/REPRODUCE_RAD);
-
             Grass::locationArray[indX][indY] = this; 
             selfPosition = sf::Vector2i(indX, indY);
         }
@@ -149,17 +138,9 @@ class Grass : public CustomSprite
             currentReproduceIter = rand()%REPRODUCE_ITER;
             if(currentReproduceIter == 0)
             {
-                //currentReproduceIter %= REPRODUCE_ITER;
                 return true;
             }
             return false;
-            /*currentReproduceIter += rand()%(REPRODUCE_ITER/50);
-            if(currentReproduceIter > REPRODUCE_ITER)
-            {
-                currentReproduceIter %= REPRODUCE_ITER;
-                return true;
-            }
-            return false;*/
         }
 
         Grass* reproduce()
@@ -168,8 +149,8 @@ class Grass : public CustomSprite
             if(true)
             {
                 int dir = rand()%4;
-                int x_pos = selfPosition.x;//(int)position.x;
-                int y_pos = selfPosition.y;//(int)position.y;
+                int x_pos = selfPosition.x;
+                int y_pos = selfPosition.y;
                 for(int i = 0; i < 4; i++)
                 {
                     if(selfPosition.x < boardDimX && dir == 0 && locationArray[x_pos + 1][y_pos] == nullptr)
@@ -194,7 +175,6 @@ class Grass : public CustomSprite
                     }
                     dir++;
                     dir %= 4;
-                    //printf("%d", dir);
                 }                
             }
             return newGrass;
@@ -347,30 +327,7 @@ int main()
         }
 
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-        {
-            apple->move(-.1f, 0);
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-        {
-            apple->move(.1f, 0);
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-        {
-            apple->move(0, -.1f);
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-        {
-            apple->move(0, .1f);
-        }
-
         window.clear();
-
-        apple->update();
-        //grass->update();
-        
-        //window.draw(*apple->getSprite());
-        //window.draw(*grass->getSprite());
 
         // Update/draw grass
         vector<Grass*>::size_type grass_num = grasses.size();

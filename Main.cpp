@@ -66,6 +66,21 @@ class CustomSprite
 
         }
 
+        CustomSprite(CustomTexture* texture){
+
+            this->texture = texture;
+
+            this->sprite = new sf::Sprite(*texture->getTexture());
+
+            this->position.x = 0;
+            this->position.y = 0;
+
+            this->sprite->setOrigin(texture->getOriginX(), texture->getOriginY());
+            //sf::Vector2f increment(0.4f, 0.4f);
+            this->sprite->setPosition(position.x, position.y);
+
+        }
+
         sf::Sprite* getSprite(){
 
             return this->sprite;
@@ -94,18 +109,79 @@ class CustomSprite
 
 class Grass : public CustomSprite
 {
+    static Grass* locationArray[][20];
+
     private:
+        const int REPRODUCE_ITER = 1000;
+        int REPRODUCE_RAD = 20;
+        const sf::Vector2i GRID_POSITION = sf::Vector2i(100, 100);
+
         vector<Grass*>* grassVector;
-        const int REPRODUCE_ITER = 500;
-        const int REPRODUCE_RAD = 10;
         int currentReproduceIter = 0;
+        sf::Vector2i selfPosition;
 
     public:
-        Grass(CustomTexture* texture, int x, int y, vector<Grass*>* grass) : CustomSprite(texture, x, y)
+        Grass(CustomTexture* texture, int x, int y, vector<Grass*>* grass, int indX, int indY) : CustomSprite{texture, x, y}
         {
-            grassVector = grass;
+            //this->texture = texture;
+            //position = sf::Vector2f((x*REPRODUCE_RAD + GRID_POSITION.x), (y*REPRODUCE_RAD + GRID_POSITION.y));
+            //printf("\nx: %d y: %d realx: %d realy: %d", position.x, position.y, x*REPRODUCE_RAD + GRID_POSITION.x, y*REPRODUCE_RAD + GRID_POSITION.y);
+            
+            //Grass::locationArray[(x-GRID_POSITION.x)/REPRODUCE_RAD][(y-GRID_POSITION.y)/REPRODUCE_RAD] = this; 
+            //selfPosition = sf::Vector2i((x-GRID_POSITION.x)/REPRODUCE_RAD, (y-GRID_POSITION.y)/REPRODUCE_RAD);
+
+            Grass::locationArray[indX][indY] = this; 
+            selfPosition = sf::Vector2i(indX, indY);
         }
-        
+
+
+        void update()
+        {
+            currentReproduceIter++;
+            currentReproduceIter %= REPRODUCE_ITER;
+        }
+
+        Grass* reproduce()
+        {
+            Grass* newGrass = nullptr;
+            if(currentReproduceIter == REPRODUCE_ITER-1)
+            {
+                int dir = rand()%4;
+                int x_pos = selfPosition.x;//(int)position.x;
+                int y_pos = selfPosition.y;//(int)position.y;
+                for(int i = 0; i < 4; i++)
+                {
+                    if(selfPosition.x < 20 && dir == 0 && locationArray[x_pos + 1][y_pos] == nullptr)
+                    {
+                        newGrass = new Grass(texture, position.x + REPRODUCE_RAD, position.y, grassVector, x_pos + 1, y_pos);
+                        return newGrass;
+                    }
+                    if(selfPosition.x > 0 && dir == 1 && locationArray[x_pos - 1][y_pos] == nullptr)
+                    {
+                        newGrass = new Grass(texture, position.x - REPRODUCE_RAD, position.y, grassVector, x_pos - 1, y_pos);
+                        return newGrass;
+                    }
+                    if(selfPosition.y < 20 && dir == 2 && locationArray[x_pos][y_pos + 1] == nullptr)
+                    {
+                        newGrass = new Grass(texture, position.x, position.y + REPRODUCE_RAD, grassVector, x_pos, y_pos + 1);
+                        return newGrass;
+                    }
+                    if(selfPosition.y > 0 && dir == 3 && locationArray[x_pos][y_pos - 1] == nullptr)
+                    {
+                        newGrass = new Grass(texture, position.x, position.y - REPRODUCE_RAD, grassVector, x_pos, y_pos - 1);
+                        return newGrass;
+                    }
+                    dir++;
+                    dir %= 4;
+                    //printf("%d", dir);
+                }                
+            }
+
+            return newGrass;
+        }
+
+
+        /*
         void update()
         {
             currentReproduceIter++;
@@ -135,9 +211,11 @@ class Grass : public CustomSprite
                 if(distance < REPRODUCE_RAD) count++;
             }
             return count;
-        }
+        }*/
 };
 
+// Declare underlying grass location array
+Grass* Grass::locationArray[20][20] = {{nullptr}};
 
 int main()
 {
@@ -153,12 +231,17 @@ int main()
 
     // Declare Data Structures
     vector<Grass*> grasses{};
+    grasses.reserve(400);
 
     // Create Sprites
-    CustomSprite* apple = new CustomSprite(t_apple, 50, 50);
-    Grass* grass = new Grass(t_grass, 200, 200, &grasses);
+    CustomSprite* apple = new CustomSprite(t_apple, 350, 200);
+    grasses.push_back(new Grass(t_grass, 100, 100, &grasses, 0, 0));
 
     vector<CustomSprite*> blocks{/*new CustomSprite(t_lemon, 50, 50), new CustomSprite(t_lemon, 100, 100)*/};
+
+    vector<char*> stuff = {};
+        stuff.push_back((char*)"cool");
+        stuff.push_back((char*)"look");
 
     // Main Loop
     while (window.isOpen())
@@ -191,21 +274,35 @@ int main()
         window.clear();
 
         apple->update();
-        grass->update();
+        //grass->update();
         
         window.draw(*apple->getSprite());
-        window.draw(*grass->getSprite());
+        //window.draw(*grass->getSprite());
 
         for(int i = 0; i < blocks.size(); i++)
         {
             window.draw(*blocks[i]->getSprite());
         }
-        for(int i = 0; i < grasses.size(); i++)
+        vector<Grass*>::size_type grass_num = grasses.size();
+        
+        //vector<char*>::size_type stuff_num = stuff.size();
+        /*for(vector<Grass*>::size_type i = 0; i < grass_num; i++)
         {
-            grasses[i]->update();
+            //printf(stuff[i]);
+            //if(i == 1) stuff.push_back((char*)"apple");
             window.draw(*grasses[i]->getSprite());
+            grasses[i]->update();
+        }*/
+        vector<Grass*>::size_type i = 0;
+        while(i < grass_num)
+        {
+            window.draw(*grasses[i]->getSprite());
+            grasses[i]->update();
+            Grass* newGrass = grasses[i]->reproduce();
+            if(newGrass != nullptr) grasses.push_back(newGrass);
+            i++;
         }
-
+        //printf("\n%d", grasses.size());
         window.display();
     }
 

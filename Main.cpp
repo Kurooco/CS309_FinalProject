@@ -93,7 +93,7 @@ class CustomSprite
             this->position.y = y;
         }
 
-        void move(double x, double y){
+        void move(float x, float y){
 
             this->position.x += x;
             this->position.y += y;
@@ -104,6 +104,11 @@ class CustomSprite
 
             this->sprite->setPosition(position.x, position.y);
 
+        }
+
+        sf::Vector2f getPosition()
+        {
+            return position;
         }
 };
 
@@ -139,16 +144,28 @@ class Grass : public CustomSprite
         }
 
 
-        void update()
+        bool update()
         {
-            currentReproduceIter += rand()%(REPRODUCE_ITER/20);
-            currentReproduceIter = currentReproduceIter > REPRODUCE_ITER ? 0 : currentReproduceIter;
+            currentReproduceIter = rand()%REPRODUCE_ITER;
+            if(currentReproduceIter == 0)
+            {
+                //currentReproduceIter %= REPRODUCE_ITER;
+                return true;
+            }
+            return false;
+            /*currentReproduceIter += rand()%(REPRODUCE_ITER/50);
+            if(currentReproduceIter > REPRODUCE_ITER)
+            {
+                currentReproduceIter %= REPRODUCE_ITER;
+                return true;
+            }
+            return false;*/
         }
 
         Grass* reproduce()
         {
             Grass* newGrass = nullptr;
-            if(currentReproduceIter == REPRODUCE_ITER-1)
+            if(true)
             {
                 int dir = rand()%4;
                 int x_pos = selfPosition.x;//(int)position.x;
@@ -183,39 +200,45 @@ class Grass : public CustomSprite
 
             return newGrass;
         }
+};
 
+class Cow : public CustomSprite
+{
+    public:
+        static const int REPRODUCE_ITER = 1000;
 
-        /*
-        void update()
+    private:
+        vector<Grass*>* grassVector;
+        int currentReproduceIter;
+        const float SPEED = 50;
+
+    public:
+        Cow(CustomTexture* texture, int x, int y, vector<Grass*>* grass) : CustomSprite{texture, x, y}
         {
-            currentReproduceIter++;
-            if(currentReproduceIter >= REPRODUCE_ITER)
-            {
-                if(getGrassesInRange() < 5)
-                {
-                    float rand_x = (position.x + REPRODUCE_RAD)-((rand()%REPRODUCE_RAD)*2);
-                    float rand_y = (position.y + REPRODUCE_RAD)-((rand()%REPRODUCE_RAD)*2);
-                    grassVector->push_back(new Grass(texture, rand_x, rand_y, grassVector));
-                }
-                currentReproduceIter = 0;
-            }
+            grassVector = grass;
+            currentReproduceIter = 0;
         }
 
-        int getGrassesInRange()
+        void update()
         {
-            int count = 0;
-            int distance = 0;
-            int x_dif = 0;
-            int y_dif = 0;
+            float minDist = INT_MAX;
+            sf::Vector2f grassPosition;
             for(int i = 0; i < grassVector->size(); i++)
             {
-                x_dif = ((*grassVector)[i]->position.x - position.x);
-                y_dif = ((*grassVector)[i]->position.y - position.y);
-                distance = sqrt(x_dif*x_dif + y_dif*y_dif);
-                if(distance < REPRODUCE_RAD) count++;
+                int xDist = (*grassVector)[i]->getPosition().x - position.x;
+                int yDist = (*grassVector)[i]->getPosition().y - position.y;
+                float distance = sqrt(xDist * xDist + yDist * yDist);
+                if(distance < minDist)
+                {
+                    minDist = distance;
+                    grassPosition = (*grassVector)[i]->getPosition();
+                }
             }
-            return count;
-        }*/
+            float xMove = (grassPosition.x/minDist)*SPEED;
+            float yMove = (grassPosition.y/minDist)*SPEED;
+            //printf("\n%f", xMove);
+            position.x += xMove;
+        }       
 };
 
 // Declare underlying grass location array
@@ -232,10 +255,13 @@ int main()
     CustomTexture* t_lemon = new CustomTexture("sprites\\lemon.png", 50, 50);
     CustomTexture* t_apple = new CustomTexture("sprites\\apple.png", 70, 50);
     CustomTexture* t_grass = new CustomTexture("sprites\\grass.png", 10, 10);
+    CustomTexture* t_cow = new CustomTexture("sprites\\cow.png", 10, 10);
 
     // Declare Data Structures
     vector<Grass*> grasses{};
     grasses.reserve(400);
+    vector<Cow*> cows{};
+    cows.reserve(200);
 
     // Create Sprites
     CustomSprite* apple = new CustomSprite(t_apple, 350, 200);
@@ -243,14 +269,13 @@ int main()
     {
         int place_x = rand()%Grass::boardDimX;
         int place_y = rand()%Grass::boardDimY;
-        grasses.push_back(new Grass(t_grass, place_x*Grass::REPRODUCE_RAD, place_y*Grass::REPRODUCE_RAD, &grasses, place_x, place_y));
+        if(Grass::locationArray[place_x][place_y] == nullptr)
+            grasses.push_back(new Grass(t_grass, place_x*Grass::REPRODUCE_RAD, place_y*Grass::REPRODUCE_RAD, &grasses, place_x, place_y));
     }
 
-    vector<CustomSprite*> blocks{/*new CustomSprite(t_lemon, 50, 50), new CustomSprite(t_lemon, 100, 100)*/};
+    cows.push_back(new Cow(t_cow, 100, 100, &grasses));
 
-    vector<char*> stuff = {};
-        stuff.push_back((char*)"cool");
-        stuff.push_back((char*)"look");
+
 
     // Main Loop
     while (window.isOpen())
@@ -288,27 +313,24 @@ int main()
         //window.draw(*apple->getSprite());
         //window.draw(*grass->getSprite());
 
-        for(int i = 0; i < blocks.size(); i++)
+        for(int i = 0; i < cows.size(); i++)
         {
-            window.draw(*blocks[i]->getSprite());
+            cows[i]->update();
+            window.draw(*cows[i]->getSprite());
         }
+
+
         vector<Grass*>::size_type grass_num = grasses.size();
-        
-        //vector<char*>::size_type stuff_num = stuff.size();
-        /*for(vector<Grass*>::size_type i = 0; i < grass_num; i++)
-        {
-            //printf(stuff[i]);
-            //if(i == 1) stuff.push_back((char*)"apple");
-            window.draw(*grasses[i]->getSprite());
-            grasses[i]->update();
-        }*/
         vector<Grass*>::size_type i = 0;
         while(i < grass_num)
         {
             window.draw(*grasses[i]->getSprite());
-            grasses[i]->update();
-            Grass* newGrass = grasses[i]->reproduce();
-            if(newGrass != nullptr) grasses.push_back(newGrass);
+            Grass* newGrass;
+            if(grasses[i]->update())
+            {
+                newGrass = grasses[i]->reproduce();
+                if(newGrass != nullptr) grasses.push_back(newGrass);
+            }
             i++;
         }
         //printf("\n%d", grasses.size());

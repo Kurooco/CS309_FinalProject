@@ -128,6 +128,7 @@ class Grass : public CustomSprite
     public:
         Grass(CustomTexture* texture, int x, int y, vector<Grass*>* grass, int indX, int indY) : CustomSprite{texture, x, y}
         {
+            srand(x);
             Grass::locationArray[indX][indY] = this; 
             selfPosition = sf::Vector2i(indX, indY);
         }
@@ -204,6 +205,7 @@ class Cow : public CustomSprite
     public:
         Cow(CustomTexture* texture, int x, int y, vector<Grass*>* grass) : CustomSprite{texture, x, y}
         {
+            srand(x);
             grassVector = grass;
             currentReproduceIter = 0;
             food = MAX_FOOD/2;
@@ -293,13 +295,22 @@ int main()
     CustomTexture* t_cow = new CustomTexture("sprites\\cow.png", 10, 10);
 
     // Declare Data Structures and other states
+    const int SIM_ITER = 16000;
+
     vector<Grass*> grasses{};
     grasses.reserve(400);
     vector<Cow*> cows{};
     cows.reserve(200);
+    vector<int> grassPopulation{};
+    grassPopulation.reserve(SIM_ITER);
+    vector<int> cowPopulation{};
+    cowPopulation.reserve(SIM_ITER);
 
-    const int BIRD_ITER = 8000;
+    const int BIRD_ITER = 4000;
     int bird = 0;
+
+    // Random seed
+    srand(5);
 
     // Create Sprites
     CustomSprite* apple = new CustomSprite(t_apple, 350, 200);
@@ -311,13 +322,14 @@ int main()
             grasses.push_back(new Grass(t_grass, place_x*Grass::REPRODUCE_RAD, place_y*Grass::REPRODUCE_RAD, &grasses, place_x, place_y));
     }
 
-    for(int i = 0; i < 20; i++)
+    for(int i = 0; i < 10; i++)
         cows.push_back(new Cow(t_cow, rand()%1000, rand()%800, &grasses));
 
 
 
     // Main Loop
-    while (window.isOpen())
+    int iter = 0;
+    while (window.isOpen() && iter < SIM_ITER)
     {
         sf::Event event;
         while (window.pollEvent(event))
@@ -373,6 +385,40 @@ int main()
         }
 
         window.display();
+
+        grassPopulation[iter] = grasses.size();
+        cowPopulation[iter] = cows.size();
+        iter++;
+    }
+
+    window.clear();
+
+    // Draw the stats 
+    // https://www.sfml-dev.org/tutorials/2.6/graphics-shape.php
+    sf::Vertex grassLine[1600]{};
+    sf::Vertex cowLine[1600]{};
+    int forward = SIM_ITER/1600;
+    for(int i = 0; i < 1600; i++)
+    {
+        grassLine[i] = sf::Vertex(sf::Vector2f(i, 800-(grassPopulation[forward*i])/5), sf::Color::Green);
+        cowLine[i] = sf::Vertex(sf::Vector2f(i, 800-(cowPopulation[forward*i])), sf::Color::White);
+        if(i%100 == 0) printf("%d, ", grassPopulation[forward*i]+cowPopulation[forward*i]);
+    }
+    window.draw(grassLine, 1600, sf::Lines);
+    window.draw(cowLine, 1600, sf::Lines);
+
+    window.display();
+
+    while (window.isOpen())
+    {
+        
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+
     }
 
     return 0;

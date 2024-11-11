@@ -296,6 +296,8 @@ int main()
 
     // Declare Data Structures and other states
     const int SIM_ITER = 8000; //8000
+    const int BIRD_ITER = 4000;
+    int bird = 0;
 
     vector<Grass*> grasses{};
     grasses.reserve(400);
@@ -306,8 +308,6 @@ int main()
     vector<int> cowPopulation{};
     cowPopulation.reserve(SIM_ITER);
 
-    const int BIRD_ITER = 4000;
-    int bird = 0;
     
     // Random seed
     srand(5);

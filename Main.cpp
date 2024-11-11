@@ -125,6 +125,7 @@ class Grass : public CustomSprite
         static const int boardDimX = 70;
         static const int boardDimY = 40;
         static const int REPRODUCE_ITER = 1000;
+        static const int RECOVER_ITER = 1500;
         static const int REPRODUCE_RAD = 20;
         static Grass* locationArray[][boardDimY+1];
 
@@ -148,7 +149,10 @@ class Grass : public CustomSprite
 
         bool update()
         {
-            currentReproduceIter = rand()%REPRODUCE_ITER;
+            if(degraded)
+                currentReproduceIter = rand()%REPRODUCE_ITER;
+            else
+                currentReproduceIter = rand()%RECOVER_ITER;
             if(currentReproduceIter == 0)
             {
                 return true;
@@ -350,7 +354,7 @@ int main()
     CustomTexture* t_cow = new CustomTexture("sprites\\cow.png", 10, 10);
 
     // Declare Data Structures and other states
-    const int SIM_ITER = 8000; //8000
+    const int SIM_ITER = 16000; //8000
     const int BIRD_ITER = 4000;
     int bird = 0;
 
@@ -461,8 +465,8 @@ int main()
     int forward = SIM_ITER/1600;
     for(int i = 0; i < 1600; i++)
     {
-        grassLine[i] = sf::Vertex(sf::Vector2f(i, 800-(grassPopulation[forward*i])/5), sf::Color::Green);
-        cowLine[i] = sf::Vertex(sf::Vector2f(i, 800-(cowPopulation[forward*i])), sf::Color::White);
+        grassLine[i] = sf::Vertex(sf::Vector2f(i, 800-(grassPopulation[forward*i])/3), sf::Color::Green);
+        cowLine[i] = sf::Vertex(sf::Vector2f(i, 800-(cowPopulation[forward*i])/3), sf::Color::White);
         if(i%100 == 0) printf("%d, ", grassPopulation[forward*i]+cowPopulation[forward*i]);
     }
     window.draw(grassLine, 1600, sf::Lines);

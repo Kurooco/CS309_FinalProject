@@ -6,6 +6,8 @@
 #include <omp.h>
 #include <stdio.h>
 #include <math.h>
+#include <ctime>
+#include <chrono>
 
 using namespace std;
 
@@ -285,8 +287,6 @@ int main()
 {
     // Create window
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Simulation");
-    sf::RectangleShape shape(sf::Vector2f(10.f, 10.f));
-    shape.setFillColor(sf::Color::Yellow);
 
     // Load Textures
     CustomTexture* t_lemon = new CustomTexture("sprites\\lemon.png", 50, 50);
@@ -295,7 +295,7 @@ int main()
     CustomTexture* t_cow = new CustomTexture("sprites\\cow.png", 10, 10);
 
     // Declare Data Structures and other states
-    const int SIM_ITER = 16000;
+    const int SIM_ITER = 8000; //8000
 
     vector<Grass*> grasses{};
     grasses.reserve(400);
@@ -308,12 +308,11 @@ int main()
 
     const int BIRD_ITER = 4000;
     int bird = 0;
-
+    
     // Random seed
     srand(5);
 
-    // Create Sprites
-    CustomSprite* apple = new CustomSprite(t_apple, 350, 200);
+    // Create sprites
     for(int i = 0; i < 40; i++)
     {
         int place_x = rand()%Grass::boardDimX;
@@ -325,9 +324,10 @@ int main()
     for(int i = 0; i < 10; i++)
         cows.push_back(new Cow(t_cow, rand()%1000, rand()%800, &grasses));
 
+    // Start timer
+    std::chrono::time_point startc = chrono::system_clock::now();
 
-
-    // Main Loop
+    // Main loop
     int iter = 0;
     while (window.isOpen() && iter < SIM_ITER)
     {
@@ -389,12 +389,18 @@ int main()
         grassPopulation[iter] = grasses.size();
         cowPopulation[iter] = cows.size();
         iter++;
-    }
+    } // End of main loop
 
-    window.clear();
+    // Print time difference
+    //printf("\ntime -> %lf\n", difftime(time(nullptr), start));
+    const auto mills = chrono::duration_cast<std::chrono::milliseconds>(startc.time_since_epoch()).count();
+    std::chrono::time_point endc = chrono::system_clock::now();
+    const auto end_mills = chrono::duration_cast<std::chrono::milliseconds>(endc.time_since_epoch()).count();
+    printf("Time: %lf\n", (end_mills-mills)/1000.f);
 
     // Draw the stats 
     // https://www.sfml-dev.org/tutorials/2.6/graphics-shape.php
+    window.clear();
     sf::Vertex grassLine[1600]{};
     sf::Vertex cowLine[1600]{};
     int forward = SIM_ITER/1600;

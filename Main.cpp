@@ -131,14 +131,14 @@ class Grass : public CustomSprite
         static Grass* locationArray[][boardDimY+1];
 
     private:
-        vector<Grass*>* grassVector;
+        boost::container::vector<Grass*>* grassVector;
         int currentReproduceIter = 0;
         sf::Vector2i selfPosition;
         bool degraded;
         CustomTexture* degradedTexture;
 
     public:
-        Grass(CustomTexture* texture, CustomTexture* degradedTexture, int x, int y, vector<Grass*>* grass, int indX, int indY) : CustomSprite{texture, x, y}
+        Grass(CustomTexture* texture, CustomTexture* degradedTexture, int x, int y, boost::container::vector<Grass*>* grass, int indX, int indY) : CustomSprite{texture, x, y}
         {
             srand(x);
             Grass::locationArray[indX][indY] = this; 
@@ -244,14 +244,14 @@ class Cow : public CustomSprite
         static const int DESPERATION_THRESHOLD = 500;
 
     private:
-        vector<Grass*>* grassVector;
+        boost::container::vector<Grass*>* grassVector;
         int currentReproduceIter;
         const float SPEED = .1;
         int food;
         sf::Vector2i searchLocation;
 
     public:
-        Cow(CustomTexture* texture, int x, int y, vector<Grass*>* grass) : CustomSprite{texture, x, y}
+        Cow(CustomTexture* texture, int x, int y, boost::container::vector<Grass*>* grass) : CustomSprite{texture, x, y}
         {
             srand(x);
             grassVector = grass;
@@ -345,7 +345,7 @@ Grass* Grass::locationArray[Grass::boardDimX+1][Grass::boardDimY+1] = {{nullptr}
 int main()
 {
 
-    boost::container::vector<string> coolbeans{};
+    //boost::container::vector<string> coolbeans{};
     
     // Create window
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Simulation");
@@ -362,9 +362,9 @@ int main()
     const int BIRD_ITER = 4000;
     int bird = 0;
 
-    vector<Grass*> grasses{};
+    boost::container::vector<Grass*> grasses{};
     grasses.reserve(400);
-    vector<Cow*> cows{};
+    boost::container::vector<Cow*> cows{};
     cows.reserve(200);
     vector<int> grassPopulation{};
     grassPopulation.reserve(SIM_ITER);
@@ -405,8 +405,8 @@ int main()
         window.clear();
 
         // Update/draw grass
-        vector<Grass*>::size_type grass_num = grasses.size();
-        vector<Grass*>::size_type i = 0;
+        int grass_num = grasses.size();
+        int i = 0;
         while(i < grass_num)
         {
             window.draw(*grasses[i]->getSprite());

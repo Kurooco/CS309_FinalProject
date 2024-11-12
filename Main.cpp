@@ -8,6 +8,7 @@
 #include <math.h>
 #include <ctime>
 #include <chrono>
+#include <boost/container/vector.hpp>
 
 using namespace std;
 
@@ -343,6 +344,9 @@ Grass* Grass::locationArray[Grass::boardDimX+1][Grass::boardDimY+1] = {{nullptr}
 
 int main()
 {
+
+    boost::container::vector<string> coolbeans{};
+    
     // Create window
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Simulation");
 

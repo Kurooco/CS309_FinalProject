@@ -8,6 +8,8 @@
 #include <math.h>
 #include <ctime>
 #include <chrono>
+//#include <concrt.c>
+//#include <boost/container/vector.hpp>
 
 using namespace std;
 
@@ -264,28 +266,48 @@ class Cow : public CustomSprite
             food--;
             float minDist = INT_MAX;
             sf::Vector2f grassPosition;
-            int xDist = 0;
-            int yDist = 0;
             int grassInd = 0;
-            for(int i = 0; i < grassVector->size(); i++)
-            {
-                // Satisfied cows pick over the less preferable grass
-                if(food > DESPERATION_THRESHOLD && (*grassVector)[i]->isDegraded()) continue; 
 
-                xDist = (*grassVector)[i]->getPosition().x - position.x;
-                yDist = (*grassVector)[i]->getPosition().y - position.y;
-                float distance = sqrt(xDist * xDist + yDist * yDist);
-                if(distance < minDist)
+            int localMinDist = INT_MAX;
+            sf::Vector2f localGrassPosition;
+            int localGrassInd = 0;
+            #pragma omp parallel shared(minDist, grassPosition, grassInd) private(localGrassInd, localGrassPosition, localMinDist)
+            {
+                
+                #pragma omp for
+                for(int i = 0; i < /*grassVector->size()*/2; i++)
                 {
-                    minDist = distance;
-                    grassPosition = (*grassVector)[i]->getPosition();
-                    grassInd = i;
+                    int xDist = 0;
+                    int yDist = 0;
+                    // Satisfied cows pick over the less preferable grass
+                    //if(food > DESPERATION_THRESHOLD && (*grassVector)[i]->isDegraded()) continue; 
+
+                    xDist = 1;//(*grassVector)[i]->getPosition().x - position.x;
+                    yDist = 2;//(*grassVector)[i]->getPosition().y - position.y;
+                    float distance = sqrt(xDist * xDist + yDist * yDist);
+                    if(distance < localMinDist)
+                    {
+                        localMinDist = distance;
+                        localGrassPosition = sf::Vector2f(0, 0);//(*grassVector)[i]->getPosition();
+                        localGrassInd = i;
+                    }
+                }
+
+                #pragma omp critical
+                if(localMinDist < minDist)
+                {
+                    minDist = localMinDist;
+                    grassPosition = localGrassPosition;
+                    grassInd = localGrassInd;
                 }
             }
+
 
             // If food is not in sight, go to random part of map in search of food
             if(minDist > EYESIGHT)
             {
+                int xDist = 0;
+                int yDist = 0;
                 xDist = searchLocation.x - position.x;
                 yDist = searchLocation.y - position.y;
                 float distance = sqrt(xDist * xDist + yDist * yDist);

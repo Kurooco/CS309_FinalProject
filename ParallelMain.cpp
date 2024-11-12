@@ -8,8 +8,7 @@
 #include <math.h>
 #include <ctime>
 #include <chrono>
-//#include <concrt.c>
-//#include <boost/container/vector.hpp>
+#include <boost/container/vector.hpp>
 
 using namespace std;
 
@@ -132,14 +131,14 @@ class Grass : public CustomSprite
         static Grass* locationArray[][boardDimY+1];
 
     private:
-        vector<Grass*>* grassVector;
+        boost::container::vector<Grass*>* grassVector;
         int currentReproduceIter = 0;
         sf::Vector2i selfPosition;
         bool degraded;
         CustomTexture* degradedTexture;
 
     public:
-        Grass(CustomTexture* texture, CustomTexture* degradedTexture, int x, int y, vector<Grass*>* grass, int indX, int indY) : CustomSprite{texture, x, y}
+        Grass(CustomTexture* texture, CustomTexture* degradedTexture, int x, int y, boost::container::vector<Grass*>* grass, int indX, int indY) : CustomSprite{texture, x, y}
         {
             srand(x);
             Grass::locationArray[indX][indY] = this; 
@@ -245,14 +244,14 @@ class Cow : public CustomSprite
         static const int DESPERATION_THRESHOLD = 500;
 
     private:
-        vector<Grass*>* grassVector;
+        boost::container::vector<Grass*>* grassVector;
         int currentReproduceIter;
         const float SPEED = .1;
         int food;
         sf::Vector2i searchLocation;
 
     public:
-        Cow(CustomTexture* texture, int x, int y, vector<Grass*>* grass) : CustomSprite{texture, x, y}
+        Cow(CustomTexture* texture, int x, int y, boost::container::vector<Grass*>* grass) : CustomSprite{texture, x, y}
         {
             srand(x);
             grassVector = grass;
@@ -266,48 +265,28 @@ class Cow : public CustomSprite
             food--;
             float minDist = INT_MAX;
             sf::Vector2f grassPosition;
+            int xDist = 0;
+            int yDist = 0;
             int grassInd = 0;
-
-            int localMinDist = INT_MAX;
-            sf::Vector2f localGrassPosition;
-            int localGrassInd = 0;
-            #pragma omp parallel shared(minDist, grassPosition, grassInd) private(localGrassInd, localGrassPosition, localMinDist)
+            for(int i = 0; i < grassVector->size(); i++)
             {
-                
-                #pragma omp for
-                for(int i = 0; i < /*grassVector->size()*/2; i++)
-                {
-                    int xDist = 0;
-                    int yDist = 0;
-                    // Satisfied cows pick over the less preferable grass
-                    //if(food > DESPERATION_THRESHOLD && (*grassVector)[i]->isDegraded()) continue; 
+                // Satisfied cows pick over the less preferable grass
+                if(food > DESPERATION_THRESHOLD && (*grassVector)[i]->isDegraded()) continue; 
 
-                    xDist = 1;//(*grassVector)[i]->getPosition().x - position.x;
-                    yDist = 2;//(*grassVector)[i]->getPosition().y - position.y;
-                    float distance = sqrt(xDist * xDist + yDist * yDist);
-                    if(distance < localMinDist)
-                    {
-                        localMinDist = distance;
-                        localGrassPosition = sf::Vector2f(0, 0);//(*grassVector)[i]->getPosition();
-                        localGrassInd = i;
-                    }
-                }
-
-                #pragma omp critical
-                if(localMinDist < minDist)
+                xDist = (*grassVector)[i]->getPosition().x - position.x;
+                yDist = (*grassVector)[i]->getPosition().y - position.y;
+                float distance = sqrt(xDist * xDist + yDist * yDist);
+                if(distance < minDist)
                 {
-                    minDist = localMinDist;
-                    grassPosition = localGrassPosition;
-                    grassInd = localGrassInd;
+                    minDist = distance;
+                    grassPosition = (*grassVector)[i]->getPosition();
+                    grassInd = i;
                 }
             }
-
 
             // If food is not in sight, go to random part of map in search of food
             if(minDist > EYESIGHT)
             {
-                int xDist = 0;
-                int yDist = 0;
                 xDist = searchLocation.x - position.x;
                 yDist = searchLocation.y - position.y;
                 float distance = sqrt(xDist * xDist + yDist * yDist);
@@ -365,6 +344,9 @@ Grass* Grass::locationArray[Grass::boardDimX+1][Grass::boardDimY+1] = {{nullptr}
 
 int main()
 {
+
+    //boost::container::vector<string> coolbeans{};
+    
     // Create window
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Simulation");
 
@@ -380,9 +362,9 @@ int main()
     const int BIRD_ITER = 4000;
     int bird = 0;
 
-    vector<Grass*> grasses{};
+    boost::container::vector<Grass*> grasses{};
     grasses.reserve(400);
-    vector<Cow*> cows{};
+    boost::container::vector<Cow*> cows{};
     cows.reserve(200);
     vector<int> grassPopulation{};
     grassPopulation.reserve(SIM_ITER);
@@ -423,8 +405,8 @@ int main()
         window.clear();
 
         // Update/draw grass
-        vector<Grass*>::size_type grass_num = grasses.size();
-        vector<Grass*>::size_type i = 0;
+        int grass_num = grasses.size();
+        int i = 0;
         while(i < grass_num)
         {
             window.draw(*grasses[i]->getSprite());

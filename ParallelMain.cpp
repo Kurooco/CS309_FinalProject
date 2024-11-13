@@ -9,8 +9,18 @@
 #include <ctime>
 #include <chrono>
 #include <boost/container/vector.hpp>
+#include <float.h>
 
 using namespace std;
+
+typedef struct
+{
+    float min;
+    int ind;
+} closeGrass;
+
+//https://stackoverflow.com/questions/24782038/omp-max-reduction-with-storage-of-index
+#pragma omp declare reduction(minDistance : closeGrass : omp_out = omp_out.min < omp_in.min ? omp_out : omp_in) initializer (omp_priv=(omp_orig))
 
 
 class CustomTexture
@@ -260,29 +270,101 @@ class Cow : public CustomSprite
             searchLocation = sf::Vector2i(rand()%1600, rand()%900);
         }
 
+        
+
         bool update()
         {
             food--;
-            float minDist = INT_MAX;
+
+            float minDist = FLT_MAX;
             sf::Vector2f grassPosition;
             int xDist = 0;
             int yDist = 0;
             int grassInd = 0;
-            for(int i = 0; i < grassVector->size(); i++)
+            closeGrass closest = {FLT_MAX, -1};
+            //printf("\n%f", minDist);
+            int iter = grassVector->size();
+            #pragma omp parallel 
             {
-                // Satisfied cows pick over the less preferable grass
-                if(food > DESPERATION_THRESHOLD && (*grassVector)[i]->isDegraded()) continue; 
-
-                xDist = (*grassVector)[i]->getPosition().x - position.x;
-                yDist = (*grassVector)[i]->getPosition().y - position.y;
-                float distance = sqrt(xDist * xDist + yDist * yDist);
-                if(distance < minDist)
+                float minDist = FLT_MAX;
+                #pragma for reduction(minDistance: closest)
+                for(int i = 0; i < iter; i++)
                 {
-                    minDist = distance;
-                    grassPosition = (*grassVector)[i]->getPosition();
-                    grassInd = i;
+                    // Satisfied cows pick over the less preferable grass
+                    if(food > DESPERATION_THRESHOLD && (*grassVector)[i]->isDegraded()) continue; 
+
+                    int xDist = (*grassVector)[i]->getPosition().x - position.x;
+                    int yDist = (*grassVector)[i]->getPosition().y - position.y;
+                    float distance = sqrt(xDist * xDist + yDist * yDist);
+                    if(distance < minDist)
+                    {
+                        //minDist = distance;
+                        //grassPosition = (*grassVector)[i]->getPosition();
+                        //grassInd = i;
+                        closest.min = distance;
+                        closest.ind = i;
+                        minDist = distance;
+                    }
                 }
             }
+            //printf("\nind: %d\n", closest.ind);
+
+            if(closest.ind != -1)
+            {
+                minDist = closest.min;
+                grassInd = closest.ind;
+                grassPosition = (*grassVector)[grassInd]->getPosition();
+            }
+
+            /*
+            float minDist = FLT_MAX;
+            sf::Vector2f grassPosition;
+            int grassInd = 0;
+
+            //int localMinDist = INT_MAX;
+            //sf::Vector2f localGrassPosition;
+            //int localGrassInd = 0;
+            #pragma omp parallel shared(minDist, grassPosition, grassInd, grassVector)
+            {
+                float localMinDist = FLT_MAX;
+                sf::Vector2f localGrassPosition;
+                int localGrassInd = 0;
+
+                int iter = grassVector->size();
+                #pragma omp for
+                for(int i = 0; i < iter; i++)
+                {
+                    //printf("\nI'm %d out of %d, and my iteration is %d", omp_get_thread_num(), omp_get_num_threads(), i);
+                    int xDist = 0;
+                    int yDist = 0;
+                    // Satisfied cows pick over the less preferable grass
+                    if(food > DESPERATION_THRESHOLD && (*grassVector)[i]->isDegraded()) continue; 
+
+                    xDist = (*grassVector)[i]->getPosition().x - position.x;
+                    yDist = (*grassVector)[i]->getPosition().y - position.y;
+                    float distance = sqrt(xDist * xDist + yDist * yDist);
+                    if(distance < localMinDist)
+                    {
+                        localMinDist = distance;
+                        localGrassPosition = (*grassVector)[i]->getPosition();
+                        localGrassInd = i;
+                        //printf("\ngot my index %d, its %f", omp_get_thread_num(), localGrassInd);
+                    }
+                }
+                //printf("\nim out %d, %d", omp_get_thread_num(), localGrassInd);
+
+                #pragma omp critical
+                if(localMinDist < minDist)
+                {
+                    //int diff = minDist;
+                    //printf("\ngotta change %d to my min: %d. Prev: %d", minDist, localMinDist, diff);
+                    minDist = localMinDist;
+                    grassPosition = localGrassPosition;
+                    grassInd = localGrassInd;
+                }
+            }*/
+
+            //printf("\nminDist: %d", minDist);
 
             // If food is not in sight, go to random part of map in search of food
             if(minDist > EYESIGHT)
@@ -302,6 +384,7 @@ class Cow : public CustomSprite
             // Can see food, but not close enough to eat
             else if(minDist > 5)
             {
+                //printf("I'm literally going insane");
                 float xMove = ((grassPosition.x - position.x)/minDist)*SPEED;
                 float yMove = ((grassPosition.y - position.y)/minDist)*SPEED;
                 move(xMove, yMove);
@@ -344,9 +427,6 @@ Grass* Grass::locationArray[Grass::boardDimX+1][Grass::boardDimY+1] = {{nullptr}
 
 int main()
 {
-
-    //boost::container::vector<string> coolbeans{};
-    
     // Create window
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Simulation");
 
@@ -439,10 +519,9 @@ int main()
         for(int i = 0; i < cows.size(); i++)
         {
             //window.draw(*cows[i]->getSprite());
-            Cow* newCow;
             if(cows[i]->update())
             {
-                newCow = cows[i]->reproduce();
+                Cow* newCow = cows[i]->reproduce();
                 cows.push_back(newCow);
             }
             if(cows[i]->hasStarved())

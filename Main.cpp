@@ -268,6 +268,7 @@ class Cow : public CustomSprite
             int xDist = 0;
             int yDist = 0;
             int grassInd = 0;
+            //printf("\n%f", minDist);
             for(int i = 0; i < grassVector->size(); i++)
             {
                 // Satisfied cows pick over the less preferable grass

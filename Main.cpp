@@ -54,8 +54,8 @@ class CustomSprite
         sf::Vector2f position;
 
     public:
-        CustomSprite(CustomTexture* texture, int x, int y){
-
+        CustomSprite(CustomTexture* texture, int x, int y)
+        {
             this->texture = texture;
 
             this->sprite = new sf::Sprite(*texture->getTexture());
@@ -65,22 +65,18 @@ class CustomSprite
 
             this->sprite->setOrigin(texture->getOriginX(), texture->getOriginY());
             this->sprite->setPosition(x, y);
-
         }
 
-        CustomSprite(CustomTexture* texture){
-
+        CustomSprite(CustomTexture* texture)
+        {
             this->texture = texture;
-
             this->sprite = new sf::Sprite(*texture->getTexture());
 
             this->position.x = 0;
             this->position.y = 0;
 
             this->sprite->setOrigin(texture->getOriginX(), texture->getOriginY());
-            //sf::Vector2f increment(0.4f, 0.4f);
             this->sprite->setPosition(position.x, position.y);
-
         }
 
         void setTexture(CustomTexture* texture)
@@ -89,29 +85,26 @@ class CustomSprite
             this->sprite->setOrigin(texture->getOriginX(), texture->getOriginY());
         }
 
-        sf::Sprite* getSprite(){
-
+        sf::Sprite* getSprite()
+        {
             return this->sprite;
-
         }
 
-        void setPosition(int x, int y){
-
+        void setPosition(int x, int y)
+        {
             this->position.x = x;
             this->position.y = y;
         }
 
-        void move(float x, float y){
-
+        void move(float x, float y)
+        {
             this->position.x += x;
             this->position.y += y;
-
         }
 
-        void update(){
-
+        void update()
+        {
             this->sprite->setPosition(position.x, position.y);
-
         }
 
         sf::Vector2f getPosition()
@@ -314,6 +307,7 @@ class Cow : public CustomSprite
                 if(eatenDegraded)
                 {
                     food += (int)(MAX_FOOD*0.5f); // Food is not as nourishing
+                    delete (*grassVector)[grassInd];
                     grassVector->erase(grassVector->begin() + grassInd);
                 }
                 else
@@ -402,7 +396,7 @@ int main()
                 window.close();
         }
 
-
+        // Clear window
         window.clear();
 
         // Update/draw grass
@@ -448,6 +442,7 @@ int main()
             }
             if(cows[i]->hasStarved())
             {
+                delete cows[i];
                 cows.erase(cows.begin() + i);
             }
         }
@@ -460,10 +455,9 @@ int main()
     } // End of main loop
 
     // Print time difference
-    //printf("\ntime -> %lf\n", difftime(time(nullptr), start));
-    const auto mills = chrono::duration_cast<std::chrono::milliseconds>(startc.time_since_epoch()).count();
     std::chrono::time_point endc = chrono::system_clock::now();
     const auto end_mills = chrono::duration_cast<std::chrono::milliseconds>(endc.time_since_epoch()).count();
+    const auto mills = chrono::duration_cast<std::chrono::milliseconds>(startc.time_since_epoch()).count();
     printf("Time: %lf\n", (end_mills-mills)/1000.f);
 
     // Draw the stats 

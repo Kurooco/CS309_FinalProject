@@ -3,7 +3,10 @@
 This is a project for CS-309.
 
 ## Checklist
-- [ ] Make grass
+- [x] Make grass
+- [x] Make cows
+- [ ] Parallelize
+- [ ] Cleanup
 
 
 
@@ -17,6 +20,54 @@ for(int i = 0; i < 100; i++)
     long id = omp_get_thread_num();
     printf("\n%d from %ld", i, id);
 }
+
+/*
+            float minDist = FLT_MAX;
+            sf::Vector2f grassPosition;
+            int grassInd = 0;
+
+            //int localMinDist = INT_MAX;
+            //sf::Vector2f localGrassPosition;
+            //int localGrassInd = 0;
+            #pragma omp parallel shared(minDist, grassPosition, grassInd, grassVector)
+            {
+                float localMinDist = FLT_MAX;
+                sf::Vector2f localGrassPosition;
+                int localGrassInd = 0;
+
+                int iter = grassVector->size();
+                #pragma omp for
+                for(int i = 0; i < iter; i++)
+                {
+                    //printf("\nI'm %d out of %d, and my iteration is %d", omp_get_thread_num(), omp_get_num_threads(), i);
+                    int xDist = 0;
+                    int yDist = 0;
+                    // Satisfied cows pick over the less preferable grass
+                    if(food > DESPERATION_THRESHOLD && (*grassVector)[i]->isDegraded()) continue; 
+
+                    xDist = (*grassVector)[i]->getPosition().x - position.x;
+                    yDist = (*grassVector)[i]->getPosition().y - position.y;
+                    float distance = sqrt(xDist * xDist + yDist * yDist);
+                    if(distance < localMinDist)
+                    {
+                        localMinDist = distance;
+                        localGrassPosition = (*grassVector)[i]->getPosition();
+                        localGrassInd = i;
+                        //printf("\ngot my index %d, its %f", omp_get_thread_num(), localGrassInd);
+                    }
+                }
+                //printf("\nim out %d, %d", omp_get_thread_num(), localGrassInd);
+
+                #pragma omp critical
+                if(localMinDist < minDist)
+                {
+                    //int diff = minDist;
+                    //printf("\ngotta change %d to my min: %d. Prev: %d", minDist, localMinDist, diff);
+                    minDist = localMinDist;
+                    grassPosition = localGrassPosition;
+                    grassInd = localGrassInd;
+                }
+            }*/
 
 ## Things I Learned/Relearned...
 

@@ -13,13 +13,9 @@
 
 using namespace std;
 
+// Turn this statement on to show visual display
+//#define DEBUG
 
-/*
-
-    - Results do not have to be exactly compareable. As long as they make sense. (Mention in writeup)
-    - Create a way to turn off graphics
-
-*/
 
 typedef struct
 {
@@ -72,8 +68,8 @@ class CustomSprite
         sf::Vector2f position;
 
     public:
-        CustomSprite(CustomTexture* texture, int x, int y){
-
+        CustomSprite(CustomTexture* texture, int x, int y)
+        {
             this->texture = texture;
 
             this->sprite = new sf::Sprite(*texture->getTexture());
@@ -83,22 +79,18 @@ class CustomSprite
 
             this->sprite->setOrigin(texture->getOriginX(), texture->getOriginY());
             this->sprite->setPosition(x, y);
-
         }
 
-        CustomSprite(CustomTexture* texture){
-
+        CustomSprite(CustomTexture* texture)
+        {
             this->texture = texture;
-
             this->sprite = new sf::Sprite(*texture->getTexture());
 
             this->position.x = 0;
             this->position.y = 0;
 
             this->sprite->setOrigin(texture->getOriginX(), texture->getOriginY());
-            //sf::Vector2f increment(0.4f, 0.4f);
             this->sprite->setPosition(position.x, position.y);
-
         }
 
         void setTexture(CustomTexture* texture)
@@ -107,29 +99,26 @@ class CustomSprite
             this->sprite->setOrigin(texture->getOriginX(), texture->getOriginY());
         }
 
-        sf::Sprite* getSprite(){
-
+        sf::Sprite* getSprite()
+        {
             return this->sprite;
-
         }
 
-        void setPosition(int x, int y){
-
+        void setPosition(int x, int y)
+        {
             this->position.x = x;
             this->position.y = y;
         }
 
-        void move(float x, float y){
-
+        void move(float x, float y)
+        {
             this->position.x += x;
             this->position.y += y;
-
         }
 
-        void update(){
-
+        void update()
+        {
             this->sprite->setPosition(position.x, position.y);
-
         }
 
         sf::Vector2f getPosition()
@@ -267,6 +256,7 @@ class Cow : public CustomSprite
         const float SPEED = .1;
         int food;
         sf::Vector2i searchLocation;
+        bool canReproduceNow;
 
     public:
         Cow(CustomTexture* texture, int x, int y, boost::container::vector<Grass*>* grass) : CustomSprite{texture, x, y}
@@ -278,57 +268,14 @@ class Cow : public CustomSprite
             searchLocation = sf::Vector2i(rand()%1600, rand()%900);
         }
 
-        
-
         bool update()
         {
             food--;
-
-            /*float minDist = FLT_MAX;
-            sf::Vector2f grassPosition;
-            int xDist = 0;
-            int yDist = 0;
-            int grassInd = 0;
-            closeGrass closest = {FLT_MAX, -1};
-            //printf("\n%f", minDist);
-            int iter = grassVector->size();
-            #pragma omp parallel num_threads(1)
-            {
-                float minDist = FLT_MAX;
-                #pragma for reduction(minDistance: closest)
-                for(int i = 0; i < iter; i++)
-                {
-                    // Satisfied cows pick over the less preferable grass
-                    if(food > DESPERATION_THRESHOLD && (*grassVector)[i]->isDegraded()) continue; 
-
-                    int xDist = (*grassVector)[i]->getPosition().x - position.x;
-                    int yDist = (*grassVector)[i]->getPosition().y - position.y;
-                    float distance = sqrt(xDist * xDist + yDist * yDist);
-                    if(distance < minDist)
-                    {
-                        //minDist = distance;
-                        //grassPosition = (*grassVector)[i]->getPosition();
-                        //grassInd = i;
-                        closest.min = distance;
-                        closest.ind = i;
-                        minDist = distance;
-                    }
-                }
-            }
-
-            if(closest.ind != -1)
-            {
-                minDist = closest.min;
-                grassInd = closest.ind;
-                grassPosition = (*grassVector)[grassInd]->getPosition();
-            }*/
-
             float minDist = INT_MAX;
             sf::Vector2f grassPosition;
             int xDist = 0;
             int yDist = 0;
             int grassInd = 0;
-            //printf("\n%f", minDist);
             for(int i = 0; i < grassVector->size(); i++)
             {
                 // Satisfied cows pick over the less preferable grass
@@ -363,7 +310,6 @@ class Cow : public CustomSprite
             // Can see food, but not close enough to eat
             else if(minDist > 5)
             {
-                //printf("I'm literally going insane");
                 float xMove = ((grassPosition.x - position.x)/minDist)*SPEED;
                 float yMove = ((grassPosition.y - position.y)/minDist)*SPEED;
                 move(xMove, yMove);
@@ -385,10 +331,8 @@ class Cow : public CustomSprite
             this->sprite->setPosition(position.x, position.y);
 
             // reproduce?
-            if(rand()%REPRODUCE_ITER == 0 && food >= FOOD_NEEDED_TO_REPRODUCE)
-                return true;
-            else   
-                return false;
+            canReproduceNow = rand()%REPRODUCE_ITER == 0 && food >= FOOD_NEEDED_TO_REPRODUCE;
+            return canReproduceNow;
         }       
 
         Cow* reproduce()
@@ -407,6 +351,9 @@ Grass* Grass::locationArray[Grass::boardDimX+1][Grass::boardDimY+1] = {{nullptr}
 
 int main()
 {
+
+    //boost::container::vector<string> coolbeans{};
+    
     // Create window
     sf::RenderWindow window(sf::VideoMode(1600, 900), "Simulation");
 
@@ -418,7 +365,7 @@ int main()
     CustomTexture* t_cow = new CustomTexture("sprites\\cow.png", 10, 10);
 
     // Declare Data Structures and other states
-    const int SIM_ITER = 10000; //10000
+    const int SIM_ITER = 10000; //8000
     const int BIRD_ITER = 4000;
     int bird = 0;
 
@@ -452,39 +399,8 @@ int main()
 
     // Main loop
     int iter = 0;
-    #pragma omp parallel num_threads(2)
-    {
-    if(omp_get_thread_num() == 1)
-    {
-        window.setActive(true);
-        while (window.isOpen() && iter < SIM_ITER)
-        {
-            sf::Event event;
-            while (window.pollEvent(event))
-            {
-                if (event.type == sf::Event::Closed)
-                    window.close();
-            }
-
-            window.clear();
-
-            for(int i = 0; i < grasses.size(); i++)
-            {
-                window.draw(*grasses[i]->getSprite());
-            }
-            for(int i = 0; i < cows.size(); i++)
-            {
-                window.draw(*cows[i]->getSprite());
-            }
-           
-            window.display();
-        }
-        window.setActive(false);
-    }
-    else{
     while (window.isOpen() && iter < SIM_ITER)
     {
-        window.setActive(false);
         sf::Event event;
         while (window.pollEvent(event))
         {
@@ -492,30 +408,28 @@ int main()
                 window.close();
         }
 
-        //window.clear();
+        // Clear window
+        window.clear();
 
         // Update/draw grass
         int grass_num = grasses.size();
         int i = 0;
-        // Draw grass
-        /*for(i = 0; i < grass_num; i++)
+#ifdef DEBUG
+        for(int i = 0; i < grass_num; i++)
         {
             window.draw(*grasses[i]->getSprite());
-        }*/
-        // Update grass
-        #pragma omp parallel for
-        for(i = 0; i < grass_num; i++)
+        }
+#endif
+        while(i < grass_num)
         {
-            //window.draw(*grasses[i]->getSprite());
             Grass* newGrass;
             if(grasses[i]->update())
             {
                 newGrass = grasses[i]->reproduce();
                 if(newGrass != nullptr) grasses.push_back(newGrass);
             }
-            //i++;
+            i++;
         }
-
 
         // Birds (Dropping seeds in random places)
         bird++;
@@ -530,18 +444,19 @@ int main()
 
 
         // Update/draw cows
-        /*for(int i = 0; i < cows.size(); i++)
+#ifdef DEBUG
+        for(int i = 0; i < cows.size(); i++)
         {
             window.draw(*cows[i]->getSprite());
-        }*/
-        //boost::container::vector<Cow*> cows_copy(cows);
-
+        }
+#endif
         for(int i = 0; i < cows.size(); i++)
         {
             //window.draw(*cows[i]->getSprite());
+            Cow* newCow;
             if(cows[i]->update())
             {
-                Cow* newCow = cows[i]->reproduce();
+                newCow = cows[i]->reproduce();
                 cows.push_back(newCow);
             }
             if(cows[i]->hasStarved())
@@ -551,23 +466,22 @@ int main()
             }
         }
 
-       // window.display();
+        window.display();
 
         grassPopulation[iter] = grasses.size();
         cowPopulation[iter] = cows.size();
         iter++;
     } // End of main loop
-    }}
 
     // Print time difference
-    const auto mills = chrono::duration_cast<std::chrono::milliseconds>(startc.time_since_epoch()).count();
     std::chrono::time_point endc = chrono::system_clock::now();
     const auto end_mills = chrono::duration_cast<std::chrono::milliseconds>(endc.time_since_epoch()).count();
+    const auto mills = chrono::duration_cast<std::chrono::milliseconds>(startc.time_since_epoch()).count();
     printf("Time: %lf\n", (end_mills-mills)/1000.f);
 
-    window.setActive(true);
     // Draw the stats 
     // https://www.sfml-dev.org/tutorials/2.6/graphics-shape.php
+
     window.clear();
     sf::Vertex grassLine[1600]{};
     sf::Vertex cowLine[1600]{};
@@ -582,7 +496,7 @@ int main()
     window.draw(cowLine, 1600, sf::Lines);
 
     window.display();
-
+    
     while (window.isOpen())
     {
         

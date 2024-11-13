@@ -12,6 +12,9 @@
 
 using namespace std;
 
+// Turn this statement on to show visual display
+//#define DEBUG
+
 
 class CustomTexture
 {
@@ -402,9 +405,14 @@ int main()
         // Update/draw grass
         int grass_num = grasses.size();
         int i = 0;
-        while(i < grass_num)
+#ifdef DEBUG
+        for(int i = 0; i < grass_num; i++)
         {
             window.draw(*grasses[i]->getSprite());
+        }
+#endif
+        while(i < grass_num)
+        {
             Grass* newGrass;
             if(grasses[i]->update())
             {
@@ -427,10 +435,12 @@ int main()
 
 
         // Update/draw cows
+#ifdef DEBUG
         for(int i = 0; i < cows.size(); i++)
         {
             window.draw(*cows[i]->getSprite());
         }
+#endif
         for(int i = 0; i < cows.size(); i++)
         {
             //window.draw(*cows[i]->getSprite());
@@ -462,6 +472,7 @@ int main()
 
     // Draw the stats 
     // https://www.sfml-dev.org/tutorials/2.6/graphics-shape.php
+
     window.clear();
     sf::Vertex grassLine[1600]{};
     sf::Vertex cowLine[1600]{};
@@ -476,7 +487,7 @@ int main()
     window.draw(cowLine, 1600, sf::Lines);
 
     window.display();
-
+    
     while (window.isOpen())
     {
         

@@ -14,7 +14,7 @@
 using namespace std;
 
 // Turn this statement on to show visual display
-//#define DEBUG
+#define DEBUG
 
 
 typedef struct
@@ -142,6 +142,7 @@ class Grass : public CustomSprite
         int currentReproduceIter = 0;
         sf::Vector2i selfPosition;
         bool degraded;
+        bool eaten;
         CustomTexture* degradedTexture;
 
     public:
@@ -151,6 +152,7 @@ class Grass : public CustomSprite
             Grass::locationArray[indX][indY] = this; 
             selfPosition = sf::Vector2i(indX, indY);
             degraded = false;
+            eaten = false;
             this->degradedTexture = degradedTexture;
         }
 
@@ -213,6 +215,7 @@ class Grass : public CustomSprite
         {
             if(degraded)
             {
+                eaten = true;
                 locationArray[selfPosition.x][selfPosition.y] = nullptr;
                 return true;
             }
@@ -226,6 +229,11 @@ class Grass : public CustomSprite
         bool isDegraded()
         {
             return degraded;
+        }
+
+        bool isEaten()
+        {
+            return eaten;
         }
 
         void becomeDegraded()
@@ -246,7 +254,7 @@ class Cow : public CustomSprite
     public:
         static const int REPRODUCE_ITER = 1000;
         static const int MAX_FOOD = 1500;
-        static const int FOOD_NEEDED_TO_REPRODUCE = 750;
+        static const int FOOD_NEEDED_TO_REPRODUCE = 760;
         static const int EYESIGHT = 100;
         static const int DESPERATION_THRESHOLD = 500;
 
@@ -317,16 +325,20 @@ class Cow : public CustomSprite
             // Can eat food
             else
             {
-                bool eatenDegraded = (*grassVector)[grassInd]->eat();
-                if(eatenDegraded)
+                #pragma omp critical
+                if(!(*grassVector)[grassInd]->isEaten())
                 {
-                    food += (int)(MAX_FOOD*0.5f); // Food is not as nourishing
-                    delete (*grassVector)[grassInd];
-                    grassVector->erase(grassVector->begin() + grassInd);
+                    bool eatenDegraded = (*grassVector)[grassInd]->eat();
+                    if(eatenDegraded)
+                    {
+                        food += (int)(MAX_FOOD*0.5f); // Food is not as nourishing
+                        //delete (*grassVector)[grassInd];
+                        //grassVector->erase(grassVector->begin() + grassInd);
+                    }
+                    else
+                        food += (int)(MAX_FOOD*0.8f); // Food is very good (Hasn't been touched)
+                    if(food > MAX_FOOD) food = MAX_FOOD;
                 }
-                else
-                    food += (int)(MAX_FOOD*0.8f); // Food is very good (Hasn't been touched)
-                if(food > MAX_FOOD) food = MAX_FOOD;
             }
             this->sprite->setPosition(position.x, position.y);
 
@@ -343,6 +355,11 @@ class Cow : public CustomSprite
         bool hasStarved()
         {
             return food <= 0;
+        }
+
+        bool canReproduce()
+        {
+            return canReproduceNow;
         }
 };
 
@@ -371,6 +388,9 @@ int main()
 
     boost::container::vector<Grass*> grasses{};
     grasses.reserve(400);
+    boost::container::vector<Grass*> grassesCopy{};
+    grasses.reserve(400);
+    boost::container::vector<Grass*>* currentGrassContainer = &grasses;
     boost::container::vector<Cow*> cows{};
     cows.reserve(200);
     vector<int> grassPopulation{};
@@ -450,19 +470,33 @@ int main()
             window.draw(*cows[i]->getSprite());
         }
 #endif
+        #pragma omp parallel for
         for(int i = 0; i < cows.size(); i++)
         {
-            //window.draw(*cows[i]->getSprite());
-            Cow* newCow;
-            if(cows[i]->update())
+            cows[i]->update();
+        }
+        int max_iter = cows.size();
+        for(int i = 0; i < cows.size() && i < max_iter; i++)
+        {
+            if(cows[i]->canReproduce())
             {
-                newCow = cows[i]->reproduce();
+                Cow* newCow = cows[i]->reproduce();
                 cows.push_back(newCow);
             }
             if(cows[i]->hasStarved())
             {
                 delete cows[i];
                 cows.erase(cows.begin() + i);
+            }
+        }
+        // Weed out eaten grass
+        for(int i = 0; i < grasses.size(); i++)
+        {
+            if(grasses[i]->isEaten())
+            {
+                delete grasses[i];
+                grasses.erase(grasses.begin() + i);
+                i--;
             }
         }
 

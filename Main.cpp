@@ -13,7 +13,7 @@
 using namespace std;
 
 // Turn this statement on to show visual display
-//#define DEBUG
+#define DEBUG
 
 
 class CustomTexture
@@ -121,17 +121,26 @@ class Grass : public CustomSprite
     public:
         static const int boardDimX = 70;
         static const int boardDimY = 40;
+        // Probability of reproducing in any given iteration
         static const int REPRODUCE_ITER = 1000;
-        static const int RECOVER_ITER = 1500;
-        static const int REPRODUCE_RAD = 20;
+        // Probability of recovering from being partially eaten in any given iteration 
+        static const int RECOVER_ITER = 1500; 
+        // The distance between plants
+        static const int REPRODUCE_RAD = 20; 
+        // 2D structure that contains the plants
         static Grass* locationArray[][boardDimY+1];
 
     private:
-        boost::container::vector<Grass*>* grassVector;
-        int currentReproduceIter = 0;
-        sf::Vector2i selfPosition;
-        bool degraded;
-        CustomTexture* degradedTexture;
+        // Pointer to vector that holds grass
+        boost::container::vector<Grass*>* grassVector; 
+        // Used to select random number for determining reproduction or recovery
+        int currentReproduceIter = 0; 
+        // Coordinates in the 2D array of grass
+        sf::Vector2i selfPosition; 
+        // Has this plant been partially eaten?
+        bool degraded; 
+        // Texture for partially eaten state
+        CustomTexture* degradedTexture; 
 
     public:
         Grass(CustomTexture* texture, CustomTexture* degradedTexture, int x, int y, boost::container::vector<Grass*>* grass, int indX, int indY) : CustomSprite{texture, x, y}
@@ -143,7 +152,7 @@ class Grass : public CustomSprite
             this->degradedTexture = degradedTexture;
         }
 
-
+        // Determines if the plant reproduces/recovers this iteration
         bool update()
         {
             if(degraded)
@@ -157,6 +166,7 @@ class Grass : public CustomSprite
             return false;
         }
 
+        // Creates new grass instance and attempts to place it in the grid
         Grass* reproduce()
         {
             if(isDegraded())
@@ -166,9 +176,11 @@ class Grass : public CustomSprite
             }
 
             Grass* newGrass = nullptr;
-            int dir = rand()%4;
+            // Choose random direction
+            int dir = rand()%4; 
             int x_pos = selfPosition.x;
             int y_pos = selfPosition.y;
+            // Starting in the random direction, try to find an empty spot nearby
             for(int i = 0; i < 4; i++)
             {
                 if(selfPosition.x < boardDimX && dir == 0 && locationArray[x_pos + 1][y_pos] == nullptr)
@@ -223,6 +235,7 @@ class Grass : public CustomSprite
             setTexture(degradedTexture);
         }
 
+        // Return plant normal state
         void becomeHighQuality()
         {
             degraded = false;
@@ -233,17 +246,27 @@ class Grass : public CustomSprite
 class Cow : public CustomSprite
 {
     public:
+        // Texture for partially eaten state
         static const int REPRODUCE_ITER = 1000;
+        // Max food that can be held by a cow
         static const int MAX_FOOD = 1500;
+        // Minimum food for reproduction
         static const int FOOD_NEEDED_TO_REPRODUCE = 750;
+        // How far a plant can be before the cow can't see it
         static const int EYESIGHT = 100;
+        // Once the cow's food drops below this, it starts being ok with eaten less-preferable grass
         static const int DESPERATION_THRESHOLD = 500;
 
     private:
+        // Hold reference to vector containing all grass objects
         boost::container::vector<Grass*>* grassVector;
+        // Determines whether the cow reproduces this iteration
         int currentReproduceIter;
+        // Speed of cow
         const float SPEED = .1;
+        // Current the food the cow has
         int food;
+        // If the cow can't see any food nearby, it goes to this random location
         sf::Vector2i searchLocation;
 
     public:
@@ -256,20 +279,22 @@ class Cow : public CustomSprite
             searchLocation = sf::Vector2i(rand()%1600, rand()%900);
         }
 
+        // Cows will eat grass if they can, move toward grass if they see it, or search for grass if there is none to be seen
         bool update()
         {
             food--;
+
+            // Calculate closest piece of grass
             float minDist = INT_MAX;
             sf::Vector2f grassPosition;
             int xDist = 0;
             int yDist = 0;
             int grassInd = 0;
-            //printf("\n%f", minDist);
             for(int i = 0; i < grassVector->size(); i++)
             {
                 // Satisfied cows pick over the less preferable grass
                 if(food > DESPERATION_THRESHOLD && (*grassVector)[i]->isDegraded()) continue; 
-
+                // Determine distance to current grass blade
                 xDist = (*grassVector)[i]->getPosition().x - position.x;
                 yDist = (*grassVector)[i]->getPosition().y - position.y;
                 float distance = sqrt(xDist * xDist + yDist * yDist);
@@ -443,7 +468,6 @@ int main()
 #endif
         for(int i = 0; i < cows.size(); i++)
         {
-            //window.draw(*cows[i]->getSprite());
             Cow* newCow;
             if(cows[i]->update())
             {

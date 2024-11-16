@@ -14,7 +14,7 @@
 using namespace std;
 
 // Turn this statement on to show visual display
-#define DEBUG
+//#define DEBUG
 
 
 class CustomTexture
@@ -133,7 +133,7 @@ class Grass : public CustomSprite
 
     private:
         // Pointer to vector that holds grass
-        boost::container::vector<Grass*>* grassVector; 
+        //boost::container::vector<Grass*>* grassVector; 
         // Used to select random number for determining reproduction or recovery
         int currentReproduceIter = 0; 
         // Coordinates in the 2D array of grass
@@ -148,7 +148,7 @@ class Grass : public CustomSprite
 
 
     public:
-        Grass(CustomTexture* texture, CustomTexture* degradedTexture, int x, int y, boost::container::vector<Grass*>* grass, int indX, int indY) : CustomSprite{texture, x, y}
+        Grass(CustomTexture* texture, CustomTexture* degradedTexture, int x, int y, int indX, int indY) : CustomSprite{texture, x, y}
         {
             srand(x);
             Grass::locationArray[indX][indY] = this; 
@@ -165,7 +165,8 @@ class Grass : public CustomSprite
                 currentReproduceIter = rand()%REPRODUCE_ITER;
             else
                 currentReproduceIter = rand()%RECOVER_ITER;
-            canReproduceOrRecover = currentReproduceIter == 0;
+            canReproduceOrRecover = (currentReproduceIter == 0);
+
             return canReproduceOrRecover;
         }
 
@@ -188,22 +189,22 @@ class Grass : public CustomSprite
             {
                 if(selfPosition.x < boardDimX && dir == 0 && locationArray[x_pos + 1][y_pos] == nullptr)
                 {
-                    newGrass = new Grass(texture, degradedTexture, position.x + REPRODUCE_RAD, position.y, grassVector, x_pos + 1, y_pos);
+                    newGrass = new Grass(texture, degradedTexture, position.x + REPRODUCE_RAD, position.y, x_pos + 1, y_pos);
                     return newGrass;
                 }
                 if(selfPosition.x > 0 && dir == 1 && locationArray[x_pos - 1][y_pos] == nullptr)
                 {
-                    newGrass = new Grass(texture, degradedTexture, position.x - REPRODUCE_RAD, position.y, grassVector, x_pos - 1, y_pos);
+                    newGrass = new Grass(texture, degradedTexture, position.x - REPRODUCE_RAD, position.y, x_pos - 1, y_pos);
                     return newGrass;
                 }
                 if(selfPosition.y < boardDimY && dir == 2 && locationArray[x_pos][y_pos + 1] == nullptr)
                 {
-                    newGrass = new Grass(texture, degradedTexture, position.x, position.y + REPRODUCE_RAD, grassVector, x_pos, y_pos + 1);
+                    newGrass = new Grass(texture, degradedTexture, position.x, position.y + REPRODUCE_RAD, x_pos, y_pos + 1);
                     return newGrass;
                 }
                 if(selfPosition.y > 0 && dir == 3 && locationArray[x_pos][y_pos - 1] == nullptr)
                 {
-                    newGrass = new Grass(texture, degradedTexture, position.x, position.y - REPRODUCE_RAD, grassVector, x_pos, y_pos - 1);
+                    newGrass = new Grass(texture, degradedTexture, position.x, position.y - REPRODUCE_RAD, x_pos, y_pos - 1);
                     return newGrass;
                 }
                 dir++;
@@ -268,7 +269,7 @@ class Cow : public CustomSprite
         static const int FOOD_NEEDED_TO_REPRODUCE = 750;
         // How far a plant can be before the cow can't see it
         static const int EYESIGHT = 100;
-        // Once the cow's food drops below this, it starts being ok with eaten less-preferable grass
+        // Once the cow's food drops below this, it starts being ok with eating less-preferable grass
         static const int DESPERATION_THRESHOLD = 500;
 
     private:
@@ -400,7 +401,7 @@ int main()
     CustomTexture* t_cow = new CustomTexture("sprites\\cow.png", 10, 10);
 
     // Declare data structures and other states
-    const int SIM_ITER = 10000; //8000
+    const int SIM_ITER = 20000; //8000
     const int BIRD_ITER = 4000;
     int bird = 0;
 
@@ -425,9 +426,8 @@ int main()
         int place_x = rand()%Grass::boardDimX;
         int place_y = rand()%Grass::boardDimY;
         if(Grass::locationArray[place_x][place_y] == nullptr)
-            grasses.push_back(new Grass(t_grass, t_grass_degraded, place_x*Grass::REPRODUCE_RAD, place_y*Grass::REPRODUCE_RAD, &grasses, place_x, place_y));
+            grasses.push_back(new Grass(t_grass, t_grass_degraded, place_x*Grass::REPRODUCE_RAD, place_y*Grass::REPRODUCE_RAD, place_x, place_y));
     }
-
     for(int i = 0; i < 10; i++)
         cows.push_back(new Cow(t_cow, rand()%1000, rand()%800, &grasses));
 
@@ -457,7 +457,7 @@ int main()
             window.draw(*grasses[i]->getSprite());
         }
 #endif
-        #pragma omp parallel for
+        /*#pragma omp parallel for
         for(int i = 0; i < grass_num; i++) grasses[i]->update();
         for(int i = 0; i < grass_num; i++)
         {
@@ -466,9 +466,27 @@ int main()
                 Grass* newGrass = grasses[i]->reproduce();
                 if(newGrass != nullptr) grasses.push_back(newGrass);
             }
-            i++;
+        }*/
+        vector<Grass*> newGrasses{};
+        #pragma omp parallel for
+        for(int i = 0; i < grass_num; i++)
+        {
+            Grass* newGrass;
+            if(grasses[i]->update())
+            {
+                newGrass = grasses[i]->reproduce();
+                #pragma omp critical
+                if(newGrass != nullptr) newGrasses.push_back(newGrass);
+            }
         }
-        /*while(i < grass_num)
+        while(!newGrasses.empty()) 
+        {
+            grasses.push_back(newGrasses[newGrasses.size()-1]);
+            newGrasses.pop_back();
+        }
+        
+        /*
+        while(i < grass_num)
         {
             Grass* newGrass;
             if(grasses[i]->update())
@@ -486,7 +504,7 @@ int main()
             int place_x = rand()%Grass::boardDimX;
             int place_y = rand()%Grass::boardDimY;
             if(Grass::locationArray[place_x][place_y] == nullptr)
-                grasses.push_back(new Grass(t_grass, t_grass_degraded, place_x*Grass::REPRODUCE_RAD, place_y*Grass::REPRODUCE_RAD, &grasses, place_x, place_y)); 
+                grasses.push_back(new Grass(t_grass, t_grass_degraded, place_x*Grass::REPRODUCE_RAD, place_y*Grass::REPRODUCE_RAD, place_x, place_y)); 
             bird = 0;
         }
 

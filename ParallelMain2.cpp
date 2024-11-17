@@ -11,10 +11,15 @@
 #include <boost/container/vector.hpp>
 #include <float.h>
 
+#define SCREEN_WIDTH 1600
+#define SCREEN_HEIGHT 900
+
 using namespace std;
 
+
+
 // Turn this statement on to show visual display
-//#define DEBUG
+#define DEBUG
 
 
 class CustomTexture
@@ -124,7 +129,7 @@ class Grass : public CustomSprite
         static const int boardDimY = 40;
         // Probability of reproducing in any given iteration
         static const int REPRODUCE_ITER = 1000;
-        // Probability of recovering from being partially eaten in any given iteration 
+        // Probability of recovering from being partially eaten in any given iteration
         static const int RECOVER_ITER = 1500; 
         // The distance between plants
         static const int REPRODUCE_RAD = 20; 
@@ -132,8 +137,6 @@ class Grass : public CustomSprite
         static Grass* locationArray[][boardDimY+1];
 
     private:
-        // Pointer to vector that holds grass
-        //boost::container::vector<Grass*>* grassVector; 
         // Used to select random number for determining reproduction or recovery
         int currentReproduceIter = 0; 
         // Coordinates in the 2D array of grass
@@ -293,7 +296,7 @@ class Cow : public CustomSprite
             grassVector = grass;
             currentReproduceIter = 0;
             food = MAX_FOOD/2;
-            searchLocation = sf::Vector2i(rand()%1600, rand()%900);
+            searchLocation = sf::Vector2i(rand()%SCREEN_WIDTH, rand()%SCREEN_HEIGHT);
         }
 
         bool update()
@@ -330,7 +333,7 @@ class Cow : public CustomSprite
                 yDist = searchLocation.y - position.y;
                 float distance = sqrt(xDist * xDist + yDist * yDist);
                 if(distance < 5)
-                    searchLocation = sf::Vector2i(rand()%1600, rand()%900);
+                    searchLocation = sf::Vector2i(rand()%SCREEN_WIDTH, rand()%SCREEN_HEIGHT);
                 else
                 {
                     float xMove = (xDist/distance)*SPEED;
@@ -391,7 +394,7 @@ Grass* Grass::locationArray[Grass::boardDimX+1][Grass::boardDimY+1] = {{nullptr}
 int main()
 {
     // Create window
-    sf::RenderWindow window(sf::VideoMode(1600, 900), "Simulation");
+    sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Simulation");
 
     // Load Textures
     CustomTexture* t_lemon = new CustomTexture("sprites\\lemon.png", 50, 50);
@@ -450,23 +453,12 @@ int main()
 
         // Update/draw grass
         int grass_num = grasses.size();
-        int i = 0;
 #ifdef DEBUG
         for(int i = 0; i < grass_num; i++)
         {
             window.draw(*grasses[i]->getSprite());
         }
 #endif
-        /*#pragma omp parallel for
-        for(int i = 0; i < grass_num; i++) grasses[i]->update();
-        for(int i = 0; i < grass_num; i++)
-        {
-            if(grasses[i]->canReproduce())
-            {
-                Grass* newGrass = grasses[i]->reproduce();
-                if(newGrass != nullptr) grasses.push_back(newGrass);
-            }
-        }*/
         vector<Grass*> newGrasses{};
         #pragma omp parallel for
         for(int i = 0; i < grass_num; i++)
@@ -474,28 +466,19 @@ int main()
             Grass* newGrass;
             if(grasses[i]->update())
             {
-                newGrass = grasses[i]->reproduce();
                 #pragma omp critical
-                if(newGrass != nullptr) newGrasses.push_back(newGrass);
+                {
+                    newGrass = grasses[i]->reproduce();
+                    if(newGrass != nullptr) newGrasses.push_back(newGrass);
+                }
             }
         }
+        // Add new grass objects to grasses vector
         while(!newGrasses.empty()) 
         {
             grasses.push_back(newGrasses[newGrasses.size()-1]);
             newGrasses.pop_back();
         }
-        
-        /*
-        while(i < grass_num)
-        {
-            Grass* newGrass;
-            if(grasses[i]->update())
-            {
-                newGrass = grasses[i]->reproduce();
-                if(newGrass != nullptr) grasses.push_back(newGrass);
-            }
-            i++;
-        }*/
 
         // Birds (Dropping seeds in random places)
         bird++;
@@ -507,7 +490,6 @@ int main()
                 grasses.push_back(new Grass(t_grass, t_grass_degraded, place_x*Grass::REPRODUCE_RAD, place_y*Grass::REPRODUCE_RAD, place_x, place_y)); 
             bird = 0;
         }
-
 
         // Update/draw cows
 #ifdef DEBUG
@@ -546,8 +528,10 @@ int main()
             }
         }
 
+        // Display graphics
         window.display();
 
+        // Collect data for the ending graph and move to the next frame
         grassPopulation[iter] = grasses.size();
         cowPopulation[iter] = cows.size();
         iter++;
@@ -563,17 +547,17 @@ int main()
     // https://www.sfml-dev.org/tutorials/2.6/graphics-shape.php
 
     window.clear();
-    sf::Vertex grassLine[1600]{};
-    sf::Vertex cowLine[1600]{};
-    int forward = SIM_ITER/1600;
-    for(int i = 0; i < 1600; i++)
+    sf::Vertex grassLine[SCREEN_WIDTH]{};
+    sf::Vertex cowLine[SCREEN_WIDTH]{};
+    int forward = SIM_ITER/SCREEN_WIDTH;
+    for(int i = 0; i < SCREEN_WIDTH; i++)
     {
         grassLine[i] = sf::Vertex(sf::Vector2f(i, 800-(grassPopulation[forward*i])/3), sf::Color::Green);
         cowLine[i] = sf::Vertex(sf::Vector2f(i, 800-(cowPopulation[forward*i])/3), sf::Color::White);
         if(i%100 == 0) printf("%d, ", grassPopulation[forward*i]+cowPopulation[forward*i]);
     }
-    window.draw(grassLine, 1600, sf::Lines);
-    window.draw(cowLine, 1600, sf::Lines);
+    window.draw(grassLine, SCREEN_WIDTH, sf::Lines);
+    window.draw(cowLine, SCREEN_WIDTH, sf::Lines);
 
     window.display();
     

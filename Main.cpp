@@ -10,6 +10,9 @@
 #include <chrono>
 #include <boost/container/vector.hpp>
 
+#define SCREEN_WIDTH 1600
+#define SCREEN_HEIGHT 900
+
 using namespace std;
 
 // Turn this statement on to show visual display
@@ -249,7 +252,7 @@ class Cow : public CustomSprite
         static const int FOOD_NEEDED_TO_REPRODUCE = 750;
         // How far a plant can be before the cow can't see it
         static const int EYESIGHT = 100;
-        // Once the cow's food drops below this, it starts being ok with eaten less-preferable grass
+        // Once the cow's food drops below this, it starts being ok with eating less-preferable grass
         static const int DESPERATION_THRESHOLD = 500;
 
     private:
@@ -271,7 +274,7 @@ class Cow : public CustomSprite
             grassVector = grass;
             currentReproduceIter = 0;
             food = MAX_FOOD/2;
-            searchLocation = sf::Vector2i(rand()%1600, rand()%900);
+            searchLocation = sf::Vector2i(rand()%SCREEN_WIDTH, rand()%SCREEN_HEIGHT);
         }
 
         // Cows will eat grass if they can, move toward grass if they see it, or search for grass if there is none to be seen
@@ -308,7 +311,7 @@ class Cow : public CustomSprite
                 yDist = searchLocation.y - position.y;
                 float distance = sqrt(xDist * xDist + yDist * yDist);
                 if(distance < 5)
-                    searchLocation = sf::Vector2i(rand()%1600, rand()%900);
+                    searchLocation = sf::Vector2i(rand()%SCREEN_WIDTH, rand()%SCREEN_HEIGHT);
                 else
                 {
                     float xMove = (xDist/distance)*SPEED;
@@ -366,7 +369,7 @@ int main()
     //boost::container::vector<string> coolbeans{};
     
     // Create window
-    sf::RenderWindow window(sf::VideoMode(1600, 900), "Simulation");
+    sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Simulation");
 
     // Load Textures
     CustomTexture* t_lemon = new CustomTexture("sprites\\lemon.png", 50, 50);
@@ -493,17 +496,17 @@ int main()
     // https://www.sfml-dev.org/tutorials/2.6/graphics-shape.php
 
     window.clear();
-    sf::Vertex grassLine[1600]{};
-    sf::Vertex cowLine[1600]{};
-    int forward = SIM_ITER/1600;
-    for(int i = 0; i < 1600; i++)
+    sf::Vertex grassLine[SCREEN_WIDTH]{};
+    sf::Vertex cowLine[SCREEN_WIDTH]{};
+    int forward = SIM_ITER/SCREEN_WIDTH;
+    for(int i = 0; i < SCREEN_WIDTH; i++)
     {
         grassLine[i] = sf::Vertex(sf::Vector2f(i, 800-(grassPopulation[forward*i])/3), sf::Color::Green);
         cowLine[i] = sf::Vertex(sf::Vector2f(i, 800-(cowPopulation[forward*i])/3), sf::Color::White);
         if(i%100 == 0) printf("%d, ", grassPopulation[forward*i]+cowPopulation[forward*i]);
     }
-    window.draw(grassLine, 1600, sf::Lines);
-    window.draw(cowLine, 1600, sf::Lines);
+    window.draw(grassLine, SCREEN_WIDTH, sf::Lines);
+    window.draw(cowLine, SCREEN_WIDTH, sf::Lines);
 
     window.display();
     

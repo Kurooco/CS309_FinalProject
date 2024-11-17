@@ -1,12 +1,12 @@
 # Cow Simulator with OpenMP
 
-This is a project for CS-309.
+This is a project for CS-309. For a full description, see the writeup submitted through Google Classroom
 
 ## Checklist
 - [x] Make grass
 - [x] Make cows
-- [ ] Parallelize
-- [ ] Cleanup
+- [x] Parallelize
+- [x] Cleanup
 
 
 
@@ -68,6 +68,17 @@ for(int i = 0; i < 100; i++)
                     grassInd = localGrassInd;
                 }
             }*/
+
+                /*#pragma omp parallel for
+        for(int i = 0; i < grass_num; i++) grasses[i]->update();
+        for(int i = 0; i < grass_num; i++)
+        {
+            if(grasses[i]->canReproduce())
+            {
+                Grass* newGrass = grasses[i]->reproduce();
+                if(newGrass != nullptr) grasses.push_back(newGrass);
+            }
+        }*/
 
 ## Things I Learned/Relearned...
 

@@ -404,7 +404,7 @@ int main()
     CustomTexture* t_cow = new CustomTexture("sprites\\cow.png", 10, 10);
 
     // Declare data structures and other states
-    const int SIM_ITER = 10000; //8000
+    const int SIM_ITER = 20000;
     const int BIRD_ITER = 4000;
     int bird = 0;
 

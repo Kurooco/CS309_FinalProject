@@ -16,7 +16,7 @@
 using namespace std;
 
 // Turn this statement on to show visual display
-#define DEBUG
+//#define DEBUG
 
 
 class CustomTexture
@@ -423,7 +423,9 @@ int main()
         }
 
         // Clear window
+#ifdef DEBUG
         window.clear();
+#endif
 
         // Update/draw grass
         int grass_num = grasses.size();
@@ -479,7 +481,9 @@ int main()
             }
         }
 
+#ifdef DEBUG
         window.display();
+#endif
 
         grassPopulation[iter] = grasses.size();
         cowPopulation[iter] = cows.size();

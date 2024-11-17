@@ -19,7 +19,7 @@ using namespace std;
 
 
 // Turn this statement on to show visual display
-#define DEBUG
+//#define DEBUG
 
 
 class CustomTexture
@@ -449,8 +449,9 @@ int main()
         }
 
         // Clear window
+#ifdef DEBUG
         window.clear();
-
+#endif
         // Update/draw grass
         int grass_num = grasses.size();
 #ifdef DEBUG
@@ -529,7 +530,9 @@ int main()
         }
 
         // Display graphics
+#ifdef DEBUG
         window.display();
+#endif
 
         // Collect data for the ending graph and move to the next frame
         grassPopulation[iter] = grasses.size();

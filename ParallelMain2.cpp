@@ -404,7 +404,7 @@ int main()
     CustomTexture* t_cow = new CustomTexture("sprites\\cow.png", 10, 10);
 
     // Declare data structures and other states
-    const int SIM_ITER = 20000; //8000
+    const int SIM_ITER = 10000; //8000
     const int BIRD_ITER = 4000;
     int bird = 0;
 
@@ -549,11 +549,12 @@ int main()
     window.clear();
     sf::Vertex grassLine[SCREEN_WIDTH]{};
     sf::Vertex cowLine[SCREEN_WIDTH]{};
-    int forward = SIM_ITER/SCREEN_WIDTH;
+    int lineOffset = 100;
+    int forward = SIM_ITER > SCREEN_WIDTH ? SIM_ITER/SCREEN_WIDTH : 1;
     for(int i = 0; i < SCREEN_WIDTH; i++)
     {
-        grassLine[i] = sf::Vertex(sf::Vector2f(i, 800-(grassPopulation[forward*i])/3), sf::Color::Green);
-        cowLine[i] = sf::Vertex(sf::Vector2f(i, 800-(cowPopulation[forward*i])/3), sf::Color::White);
+        grassLine[i] = sf::Vertex(sf::Vector2f(i, (SCREEN_HEIGHT-lineOffset)-(grassPopulation[forward*i])/3), sf::Color::Green);
+        cowLine[i] = sf::Vertex(sf::Vector2f(i, (SCREEN_HEIGHT-lineOffset)-(cowPopulation[forward*i])/3), sf::Color::White);
         if(i%100 == 0) printf("%d, ", grassPopulation[forward*i]+cowPopulation[forward*i]);
     }
     window.draw(grassLine, SCREEN_WIDTH, sf::Lines);

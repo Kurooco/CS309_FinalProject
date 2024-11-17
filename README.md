@@ -1,6 +1,6 @@
 # Cow Simulator with OpenMP
 
-This is a project for CS-309. For a full description, see the writeup submitted through Google Classroom
+This is a project for CS-309. For a full description, see the writeup submitted through Google Classroom.
 
 ## Checklist
 - [x] Make grass
@@ -10,9 +10,7 @@ This is a project for CS-309. For a full description, see the writeup submitted 
 
 
 
-
-
-## Useful Code Snips
+## Useful Code Snips (Code that I didn't want to delete since I might need it later)
 
 #pragma omp parallel for num_threads(4)
 for(int i = 0; i < 100; i++)
@@ -87,4 +85,4 @@ for(int i = 0; i < 100; i++)
 
 ## Websites Visited for this Project
 
-(Not yet compiled)
+See Google Classroom Submission

@@ -9,10 +9,10 @@ parallel:
 	g++ -c parallelmain2.cpp -I"C:\Users\DJsul\OneDrive\Documents\libraries\SFML-2.5.1\include" -I"C:\Program Files\boost\boost_1_82_0\boost_1_82_0" -DSFML_STATIC -fopenmp
 
 link_parallel:
-	g++ parallelmain2.o -L"C:\Users\DJsul\OneDrive\Documents\libraries\SFML-2.5.1\lib" -L"C:\Program Files\boost\boost_1_82_0\boost_1_82_0" -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lopengl32 -lfreetype -lwinmm -lgdi32 -openal32 -fopenmp -o Main
+	g++ parallelmain2.o -L"C:\Users\DJsul\OneDrive\Documents\libraries\SFML-2.5.1\lib" -L"C:\Program Files\boost\boost_1_82_0\boost_1_82_0" -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lopengl32 -lfreetype -lwinmm -lgdi32 -openal32 -fopenmp -o SimOmp
 
 link_serial:
-	g++ main.o -L"C:\Users\DJsul\OneDrive\Documents\libraries\SFML-2.5.1\lib" -L"C:\Program Files\boost\boost_1_82_0\boost_1_82_0" -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lopengl32 -lfreetype -lwinmm -lgdi32 -openal32 -fopenmp -o Main
+	g++ main.o -L"C:\Users\DJsul\OneDrive\Documents\libraries\SFML-2.5.1\lib" -L"C:\Program Files\boost\boost_1_82_0\boost_1_82_0" -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system -lopengl32 -lfreetype -lwinmm -lgdi32 -openal32 -fopenmp -o SimSeq
 
 run:
 	main.exe
